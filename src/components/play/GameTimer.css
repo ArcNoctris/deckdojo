@@ -1,0 +1,129 @@
+.game-timer {
+  border-radius: 12px;
+  padding: 1rem;
+  border: 2px solid;
+  transition: all 0.3s ease;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.timer-hexagon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.timer-display {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.timer-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.timer-section h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.time-value {
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: center;
+  min-width: 80px;
+  border: 1px solid;
+  font-family: monospace;
+}
+
+.player-indicator-container {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.player-indicator {
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.9rem;
+  font-weight: bold;
+  border: 2px solid;
+  transition: all 0.3s ease;
+}
+
+.player-indicator.active {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(252, 221, 90, 0.3);
+}
+
+.timer-controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.timer-button {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  min-width: 70px;
+  transition: all 0.2s ease;
+}
+
+.timer-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.timer-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.timer-button:disabled {
+  cursor: not-allowed;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .game-timer {
+    padding: 0.75rem;
+  }
+  
+  .time-value {
+    font-size: 1rem;
+    padding: 0.4rem 0.6rem;
+    min-width: 70px;
+  }
+  
+  .timer-button {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    min-width: 60px;
+  }
+  
+  .player-indicator {
+    width: 35px;
+    height: 35px;
+    font-size: 0.8rem;
+  }
+}

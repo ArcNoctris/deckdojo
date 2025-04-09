@@ -4,7 +4,11 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   signOut,
-  onAuthStateChanged 
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
+  FacebookAuthProvider,
+  TwitterAuthProvider
 } from 'firebase/auth';
 import { 
   getFirestore, 
@@ -26,6 +30,11 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Auth providers
+const googleProvider = new GoogleAuthProvider();
+const facebookProvider = new FacebookAuthProvider();
+const twitterProvider = new TwitterAuthProvider();
+
 // Auth functions
 export const loginUser = (email, password) => {
   return signInWithEmailAndPassword(auth, email, password);
@@ -45,6 +54,56 @@ export const getCurrentUser = () => {
 
 export const onAuthChange = (callback) => {
   return onAuthStateChanged(auth, callback);
+};
+
+// Social auth functions
+export const signInWithGoogle = async () => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
+    
+    // Check if user document exists
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    
+    // If user doesn't exist in Firestore, create a new document
+    if (!userDoc.exists()) {
+      await createDocument('users', {
+        username: user.displayName || user.email.split('@')[0],
+        email: user.email,
+        createdAt: new Date().toISOString(),
+        decks: [],
+        gameHistory: []
+      }, user.uid);
+    }
+    
+    return user;
+  } catch (error) {
+    console.error("Error signing in with Google:", error);
+    throw error;
+  }
+};
+
+// Placeholder functions for future auth methods
+export const signInWithFacebook = async () => {
+  try {
+    // This is a placeholder for future implementation
+    const result = await signInWithPopup(auth, facebookProvider);
+    return result.user;
+  } catch (error) {
+    console.error("Error signing in with Facebook:", error);
+    throw error;
+  }
+};
+
+export const signInWithTwitter = async () => {
+  try {
+    // This is a placeholder for future implementation
+    const result = await signInWithPopup(auth, twitterProvider);
+    return result.user;
+  } catch (error) {
+    console.error("Error signing in with Twitter:", error);
+    throw error;
+  }
 };
 
 // Firestore functions

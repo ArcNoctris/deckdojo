@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { registerUser, createDocument } from '../../firebase/firebase';
+import { registerUser, signInWithGoogle } from '../../firebase/firebase';
+import { useTheme } from '../../contexts/ThemeContext';
+import './Auth.css';
 
 const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,20 +23,7 @@ const Register = () => {
     try {
       setError('');
       setLoading(true);
-      
-      // Create user with Firebase Auth
-      const userCredential = await registerUser(email, password);
-      const user = userCredential.user;
-      
-      // Create user profile in Firestore
-      await createDocument('users', {
-        username,
-        email: user.email,
-        createdAt: new Date().toISOString(),
-        decks: [],
-        gameHistory: []
-      }, user.uid);
-      
+      await registerUser(email, password);
       navigate('/dashboard');
     } catch (error) {
       setError('Failed to create an account: ' + error.message);
@@ -43,59 +32,126 @@ const Register = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      setError('');
+      setLoading(true);
+      await signInWithGoogle();
+      navigate('/dashboard');
+    } catch (error) {
+      setError('Failed to sign in with Google: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="register-container">
-      <h2>Register for DeckDojo</h2>
-      {error && <div className="alert alert-danger">{error}</div>}
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="username">Username</label>
-          <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
+    <div className="auth-container" style={{ backgroundColor: theme.colors.background }}>
+      <div className="auth-card pixel-border" style={{ 
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.primary,
+        boxShadow: theme.shadows.pixelMedium
+      }}>
+        <h2 className="auth-title" style={{ color: theme.colors.text }}>Create an Account</h2>
+        
+        {error && (
+          <div className="auth-error pixel-border" style={{ 
+            backgroundColor: theme.colors.error,
+            color: theme.colors.white,
+            borderColor: theme.colors.error
+          }}>
+            {error}
+          </div>
+        )}
+        
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label htmlFor="email" style={{ color: theme.colors.text }}>Email</label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="pixel-input"
+              style={{ 
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.background,
+                color: theme.colors.text
+              }}
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="password" style={{ color: theme.colors.text }}>Password</label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="pixel-input"
+              style={{ 
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.background,
+                color: theme.colors.text
+              }}
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="confirm-password" style={{ color: theme.colors.text }}>Confirm Password</label>
+            <input
+              type="password"
+              id="confirm-password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              className="pixel-input"
+              style={{ 
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.background,
+                color: theme.colors.text
+              }}
+            />
+          </div>
+          
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="auth-button pixel-button"
+            style={{
+              backgroundColor: theme.colors.primary,
+              color: theme.colors.textOnPrimary,
+              borderColor: theme.colors.primary
+            }}
+          >
+            {loading ? 'Creating Account...' : 'Register'}
+          </button>
+        </form>
+        
+        <div className="auth-divider" style={{ color: theme.colors.textSecondary }}>
+          <span>OR</span>
         </div>
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="confirm-password">Confirm Password</label>
-          <input
-            type="password"
-            id="confirm-password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit" disabled={loading}>
-          {loading ? 'Registering...' : 'Register'}
+        
+        <button 
+          onClick={handleGoogleSignIn}
+          className="social-button google-button pixel-button"
+          style={{
+            backgroundColor: theme.colors.surface,
+            color: theme.colors.text,
+            borderColor: theme.colors.border
+          }}
+        >
+          <span className="social-icon">G</span>
+          <span>Sign up with Google</span>
         </button>
-      </form>
-      <div className="auth-links">
-        <p>
-          Already have an account? <Link to="/login">Login</Link>
-        </p>
+        
+        <div className="auth-links" style={{ color: theme.colors.textSecondary }}>
+          <p>
+            Already have an account? <Link to="/login" style={{ color: theme.colors.primary }}>Login</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
