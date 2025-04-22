@@ -70,6 +70,7 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+  min-height: 70vh; /* Ensure minimum height for short pages */
 }
 
 /* Auth forms */

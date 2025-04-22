@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { db } from '../../firebase/firebase';
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { searchCards } from '../../services/mongodbService';
 import './CardSearch.css';
 
 const CARD_TYPES = [
@@ -42,61 +41,59 @@ const CardSearch = ({ onCardSelect }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const searchCards = async () => {
+  const fetchCards = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      let q = collection(db, 'card');
-      const conditions = [];
-
-      // Name search
-      if (searchTerm) {
-        conditions.push(where('name', '>=', searchTerm));
-        conditions.push(where('name', '<=', searchTerm + '\uf8ff'));
-      }
-
-      // Type filter
-      if (selectedType) {
-        conditions.push(where('type', '==', selectedType));
-      }
-
-      // Attribute filter (only for monsters)
-      if (selectedAttribute && selectedType.includes('Monster')) {
-        conditions.push(where('attribute', '==', selectedAttribute));
-      }
-
-      // Level range (only for monsters)
-      if (selectedType.includes('Monster')) {
-        if (minLevel) conditions.push(where('level', '>=', parseInt(minLevel)));
-        if (maxLevel) conditions.push(where('level', '<=', parseInt(maxLevel)));
-      }
-
-      // ATK range (only for monsters)
-      if (selectedType.includes('Monster')) {
-        if (minATK) conditions.push(where('atk', '>=', parseInt(minATK)));
-        if (maxATK) conditions.push(where('atk', '<=', parseInt(maxATK)));
-      }
-
-      // DEF range (only for monsters)
-      if (selectedType.includes('Monster')) {
-        if (minDEF) conditions.push(where('def', '>=', parseInt(minDEF)));
-        if (maxDEF) conditions.push(where('def', '<=', parseInt(maxDEF)));
-      }
-
-      // Add order and limit
-      conditions.push(orderBy('name'));
-      conditions.push(limit(50));
-
-      const cardQuery = query(q, ...conditions);
-      const querySnapshot = await getDocs(cardQuery);
+      // Build filters object for the search
+      const filters = {};
       
-      const cardList = [];
-      querySnapshot.forEach((doc) => {
-        cardList.push({ id: doc.id, ...doc.data() });
-      });
+      if (selectedType) {
+        filters.type = selectedType;
+      }
+      
+      if (selectedAttribute && selectedType.includes('Monster')) {
+        filters.attribute = selectedAttribute;
+      }
+      
+      if (minLevel && selectedType.includes('Monster')) {
+        filters.minLevel = minLevel;
+      }
+      
+      if (maxLevel && selectedType.includes('Monster')) {
+        filters.maxLevel = maxLevel;
+      }
+      
+      if (minATK && selectedType.includes('Monster')) {
+        filters.minATK = minATK;
+      }
+      
+      if (maxATK && selectedType.includes('Monster')) {
+        filters.maxATK = maxATK;
+      }
+      
+      if (minDEF && selectedType.includes('Monster')) {
+        filters.minDEF = minDEF;
+      }
+      
+      if (maxDEF && selectedType.includes('Monster')) {
+        filters.maxDEF = maxDEF;
+      }
 
-      setCards(cardList);
+      console.log("Searching cards with term:", searchTerm, "and filters:", filters);
+      
+      // Use the mongodbService to search for cards
+      const result = await searchCards(searchTerm, filters);
+      console.log("Raw search results:", result);
+      
+      // Ensure result is an array before setting state
+      const validCards = Array.isArray(result) 
+        ? result.filter(card => card && typeof card === 'object' && Object.keys(card).length > 0)
+        : [];
+      
+      console.log("Filtered valid cards:", validCards);
+      setCards(validCards);
     } catch (error) {
       console.error('Error searching cards:', error);
       setError('Failed to search cards. Please try again.');
@@ -107,7 +104,51 @@ const CardSearch = ({ onCardSelect }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    searchCards();
+    fetchCards();
+  };
+
+  const handleCardSelectWrapper = (card) => {
+    // Debug the card being selected
+    console.log("Card selected:", card);
+    
+    // Check if the card is valid
+    if (!card || typeof card !== 'object' || Object.keys(card).length === 0) {
+      console.error("Attempted to select an invalid card:", card);
+      return;
+    }
+    
+    // Check for required properties
+    if (!card.id) {
+      console.error("Card is missing id:", card);
+      card.id = `temp-${Date.now()}-${Math.random().toString(36).substring(2)}`;
+    }
+    
+    if (!card.name) {
+      console.error("Card is missing name:", card);
+      card.name = "Unknown Card";
+    }
+    
+    if (!card.type) {
+      console.error("Card is missing type:", card);
+      card.type = "Unknown Type";
+    }
+    
+    // Call the original onCardSelect
+    onCardSelect(card, determineCardSection(card));
+  };
+
+  // Determine which section (main, extra, side) a card belongs to
+  const determineCardSection = (card) => {
+    if (!card || !card.type) return 'main';
+    
+    const extraDeckTypes = [
+      'Fusion Monster', 
+      'Synchro Monster', 
+      'XYZ Monster', 
+      'Link Monster'
+    ];
+    
+    return extraDeckTypes.some(type => card.type.includes(type)) ? 'extra' : 'main';
   };
 
   const isMonsterType = selectedType.includes('Monster');
@@ -270,74 +311,72 @@ const CardSearch = ({ onCardSelect }) => {
           )}
         </div>
 
-        <button
+        <button 
           type="submit"
           className="search-button"
           style={{
-            backgroundColor: theme.colors.accent,
-            color: theme.colors.white
+            backgroundColor: theme.colors.primary,
+            color: theme.colors.text
           }}
+          disabled={loading}
         >
-          Search
+          {loading ? 'Searching...' : 'Search Cards'}
         </button>
       </form>
 
       {error && (
-        <div 
-          className="error-message"
-          style={{ 
-            backgroundColor: theme.colors.error,
-            color: theme.colors.white
-          }}
-        >
+        <div className="error-message" style={{ color: theme.colors.error }}>
           {error}
         </div>
       )}
 
-      {loading ? (
-        <div className="loading-message" style={{ color: theme.colors.text }}>
-          Searching cards...
-        </div>
-      ) : (
-        <div className="search-results">
-          {cards.map(card => (
-            <div
-              key={card.id}
-              className="card-result"
-              onClick={() => onCardSelect(card)}
-              style={{
-                backgroundColor: theme.colors.cardBackground,
-                borderColor: theme.colors.border
-              }}
-            >
-              <img 
-                src={card.card_image.small} 
-                alt={card.name}
-                className="card-image"
-                loading="lazy"
-              />
-              <div className="card-info">
-                <span className="card-name" style={{ color: theme.colors.text }}>
-                  {card.name}
-                </span>
-                <span className="card-type" style={{ color: theme.colors.textSecondary }}>
-                  {card.type}
-                </span>
-                {isMonsterType && (
-                  <>
-                    <span style={{ color: theme.colors.textSecondary }}>
-                      ATK: {card.atk} / DEF: {card.def}
-                    </span>
-                    <span style={{ color: theme.colors.textSecondary }}>
-                      Level: {card.level} / Attribute: {card.attribute}
-                    </span>
-                  </>
+      <div className="search-results">
+        {cards.length === 0 ? (
+          <div className="no-results" style={{ color: theme.colors.textSecondary }}>
+            {loading ? 'Searching for cards...' : 'No cards found. Try adjusting your search.'}
+          </div>
+        ) : (
+          <div className="card-grid">
+            {cards.map((card, index) => (
+              <div 
+                key={card.id || `search-card-${index}`}
+                className="card-item"
+                onClick={() => handleCardSelectWrapper(card)}
+                style={{
+                  backgroundColor: theme.colors.cardBackground,
+                  borderColor: theme.colors.border
+                }}
+              >
+                {card.card_images[0].image_url_small ? (
+                  <div className="card-image">
+                    <img src={card.card_images[0].image_url_small} alt={card.name || 'Card'} />
+                  </div>
+                ) : (
+                  <div 
+                    className="card-placeholder"
+                    style={{ backgroundColor: theme.colors.accent }}
+                  >
+                    {card.name ? card.name.substring(0, 1) : '?'}
+                  </div>
                 )}
+                <div className="card-details">
+                  <div className="card-name" style={{ color: theme.colors.text }}>
+                    {card.name || 'Unknown Card'}
+                  </div>
+                  <div className="card-type" style={{ color: theme.colors.textSecondary }}>
+                    {card.type || 'Unknown Type'}
+                  </div>
+                  {card.atk !== undefined && card.def !== undefined && (
+                    <div className="card-stats" style={{ color: theme.colors.textSecondary }}>
+                      ATK: {card.atk !== undefined ? card.atk : '?'} / DEF: {card.def !== undefined ? card.def : '?'}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

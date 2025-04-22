@@ -4,13 +4,16 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Navbar from './components/navigation/Navbar';
+import Footer from './components/common/Footer';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import Dashboard from './components/dashboard/Dashboard';
-import Play from './components/play/Play';
+import Play from './archive/play/Play';
 import LoadingAnimation from './components/common/LoadingAnimation';
 import DeckWelcome from './components/deck/DeckWelcome';
 import DeckBuilder from './components/deck/DeckBuilder';
+import DuelLobby from './components/duel/DuelLobby';
+import Duel from './components/duel/Duel';
 import './styles/global.css';
 import './App.css';
 
@@ -40,7 +43,7 @@ function App() {
             <main className="main-content">
               <Routes>
                 {/* Public routes */}
-                <Route path="/" element={<Navigate to="/play" />} />
+                <Route path="/" element={<Navigate to="/dashboard" />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/play" element={<Play />} />
@@ -51,10 +54,12 @@ function App() {
                   <Route path="/decks" element={<DeckWelcome />} />
                   <Route path="/decks/new" element={<DeckBuilder />} />
                   <Route path="/decks/:deckId" element={<DeckBuilder />} />
-                  {/* Add more protected routes here */}
+                  <Route path="/duel" element={<DuelLobby />} />
+                  <Route path="/duel/:sessionId" element={<Duel />} />
                 </Route>
               </Routes>
             </main>
+            <Footer />
           </div>
         </AuthProvider>
       </ThemeProvider>

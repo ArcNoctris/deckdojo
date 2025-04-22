@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { db } from '../../firebase/firebase';
-import { doc, getDoc, updateDoc, collection, addDoc } from 'firebase/firestore';
+import { getDeckById, createDeck, updateDeck } from '../../services/deckService';
 import './DeckBuilder.css';
 import DeckCardDisplay from './DeckCardDisplay';
 import CardSearch from './CardSearch';
@@ -57,19 +56,16 @@ const DeckBuilder = () => {
           return;
         }
 
-        const deckRef = doc(db, 'deck', deckId);
-        const deckSnap = await getDoc(deckRef);
+        const deckData = await getDeckById(deckId);
         
-        if (deckSnap.exists()) {
-          const deckData = deckSnap.data();
-          
+        if (deckData) {
           if (deckData.uid === currentUser.uid) {
             setDeck({
               ...deckData,
               mainColor: deckData.mainColor || theme?.colors?.accent || '#000000',
-              main: deckData.main || [],
-              extra: deckData.extra || [],
-              side: deckData.side || []
+              main: Array.isArray(deckData.main) ? deckData.main : [],
+              extra: Array.isArray(deckData.extra) ? deckData.extra : [],
+              side: Array.isArray(deckData.side) ? deckData.side : []
             });
           } else {
             setError('You do not have permission to edit this deck');
@@ -108,29 +104,33 @@ const DeckBuilder = () => {
     }));
   };
 
-  const handleCardSelect = (card) => {
-    // Determine which deck section to add the card to based on its type
-    let targetDeck = 'main';
-    if (card.type.includes('Fusion') || 
-        card.type.includes('Synchro') || 
-        card.type.includes('XYZ') || 
-        card.type.includes('Link')) {
-      targetDeck = 'extra';
-    }
-
-    // Count how many copies of this card are already in the deck
-    const cardCount = deck[targetDeck].filter(c => c.id === card.id).length;
+  const handleCardSelect = (card, section) => {
+    if (!card || !section) return;
     
-    if (cardCount >= 3) {
-      setError('You can only have up to 3 copies of a card in your deck');
-      return;
-    }
+    setDeck(prev => {
+      const newSection = Array.isArray(prev[section]) ? [...prev[section]] : [];
+      newSection.push(card);
+      return {
+        ...prev,
+        [section]: newSection,
+        updatedAt: new Date()
+      };
+    });
+  };
 
-    // Add the card to the appropriate deck
-    setDeck(prev => ({
-      ...prev,
-      [targetDeck]: [...prev[targetDeck], card]
-    }));
+  const handleCardRemove = (card, section) => {
+    if (!card || !section) return;
+    
+    setDeck(prev => {
+      const newSection = Array.isArray(prev[section]) 
+        ? prev[section].filter(c => c && c.id !== card.id)
+        : [];
+      return {
+        ...prev,
+        [section]: newSection,
+        updatedAt: new Date()
+      };
+    });
   };
 
   const saveDeck = async () => {
@@ -139,7 +139,7 @@ const DeckBuilder = () => {
       return;
     }
 
-    if (!deck.name.trim()) {
+    if (!deck.name || !deck.name.trim()) {
       setError('Please enter a deck name');
       return;
     }
@@ -160,11 +160,10 @@ const DeckBuilder = () => {
 
       if (isNewDeck) {
         deckData.createdAt = new Date();
-        const deckRef = await addDoc(collection(db, 'deck'), deckData);
-        navigate(`/decks/${deckRef.id}`);
+        const newDeckId = await createDeck(deckData);
+        navigate(`/decks/${newDeckId}`);
       } else {
-        const deckRef = doc(db, 'deck', deckId);
-        await updateDoc(deckRef, deckData);
+        await updateDeck(deckId, deckData);
         setError(null);
       }
     } catch (error) {
@@ -200,7 +199,7 @@ const DeckBuilder = () => {
                 type="text"
                 id="name"
                 name="name"
-                value={deck.name}
+                value={deck.name || ''}
                 onChange={handleInputChange}
                 placeholder="Enter deck name"
                 style={{ 
@@ -213,16 +212,17 @@ const DeckBuilder = () => {
             
             <div className="form-group">
               <label htmlFor="mainColor" style={{ color: theme.colors.text }}>Deck Color</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                 <input
                   type="color"
                   id="mainColor"
                   name="mainColor"
-                  value={deck.mainColor}
+
+                  value={deck.mainColor || '#000000'}
                   onChange={handleColorChange}
-                  style={{ width: '50px', height: '30px' }}
+                  style={{ width: '50px', height: '30px',accentColor: deck.mainColor, backgroundColor: deck.mainColor}}
                 />
-                <span style={{ color: theme.colors.text }}>{deck.mainColor}</span>
+                
               </div>
             </div>
           </div>
@@ -230,20 +230,22 @@ const DeckBuilder = () => {
           <div className="deck-stats">
             <div className="stat-item">
               <span style={{ color: theme.colors.textSecondary }}>Main Deck</span>
-              <span style={{ color: theme.colors.text }}>{deck.main.length}</span>
+              <span style={{ color: theme.colors.text }}>{Array.isArray(deck.main) ? deck.main.length : 0}</span>
             </div>
             <div className="stat-item">
               <span style={{ color: theme.colors.textSecondary }}>Extra Deck</span>
-              <span style={{ color: theme.colors.text }}>{deck.extra.length}</span>
+              <span style={{ color: theme.colors.text }}>{Array.isArray(deck.extra) ? deck.extra.length : 0}</span>
             </div>
             <div className="stat-item">
               <span style={{ color: theme.colors.textSecondary }}>Side Deck</span>
-              <span style={{ color: theme.colors.text }}>{deck.side.length}</span>
+              <span style={{ color: theme.colors.text }}>{Array.isArray(deck.side) ? deck.side.length : 0}</span>
             </div>
             <div className="stat-item">
               <span style={{ color: theme.colors.textSecondary }}>Total</span>
               <span style={{ color: theme.colors.text }}>
-                {deck.main.length + deck.extra.length + deck.side.length}
+                {(Array.isArray(deck.main) ? deck.main.length : 0) +
+                 (Array.isArray(deck.extra) ? deck.extra.length : 0) +
+                 (Array.isArray(deck.side) ? deck.side.length : 0)}
               </span>
             </div>
           </div>
@@ -302,7 +304,11 @@ const DeckBuilder = () => {
               borderColor: theme.colors.border
             }}
           >
-            <DeckCardDisplay deck={deck} />
+            <DeckCardDisplay 
+              deck={deck} 
+              onCardSelect={handleCardSelect}
+              onCardRemove={handleCardRemove}
+            />
           </div>
         </div>
       </div>

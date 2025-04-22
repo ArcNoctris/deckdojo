@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { registerUser, signInWithGoogle } from '../../firebase/firebase';
+import { registerUser, signInWithGoogle } from '../../services/firebase/firebase';
 import { useTheme } from '../../contexts/ThemeContext';
 import './Auth.css';
 

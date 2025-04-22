@@ -1,180 +1,217 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { getCachedImage, initImageCache } from '../../utils/imageCache';
 import './DeckCardDisplay.css';
 
 const DeckCardDisplay = ({ deck, onCardSelect, onCardRemove }) => {
   const { theme } = useTheme();
-  const [imageUrls, setImageUrls] = useState({});
   const [selectedCard, setSelectedCard] = useState(null);
 
+  // Debug logging
   useEffect(() => {
-    // Initialize cache when component mounts
-    initImageCache();
-  }, []);
-
-  useEffect(() => {
-    const loadImages = async () => {
-      const urls = {};
+    console.log("DeckCardDisplay received deck:", JSON.stringify(deck));
+    
+    // Log deck sections to identify potential issues
+    if (deck) {
+      console.log("Main deck:", deck.main);
+      console.log("Extra deck:", deck.extra);
+      console.log("Side deck:", deck.side);
       
-      // Load images for all cards in the deck
-      const allCards = [...deck.main, ...deck.extra, ...deck.side];
-      for (const card of allCards) {
-        if (card.image && !imageUrls[card.id]) {
-          try {
-            const response = await getCachedImage(card.image);
-            if (response.ok) {
-              const blob = await response.blob();
-              urls[card.id] = URL.createObjectURL(blob);
-            }
-          } catch (error) {
-            console.error(`Error loading image for card ${card.id}:`, error);
-          }
+      // Check for empty objects in deck arrays
+      const findEmptyObjects = (array, name) => {
+        if (!Array.isArray(array)) {
+          console.error(`${name} is not an array:`, array);
+          return;
         }
-      }
+        
+        array.forEach((item, index) => {
+          if (item && typeof item === 'object' && Object.keys(item).length === 0) {
+            console.error(`Empty object found in ${name} at index ${index}:`, item);
+          }
+        });
+      };
       
-      setImageUrls(prev => ({ ...prev, ...urls }));
-    };
-
-    loadImages();
-  }, [deck.main, deck.extra, deck.side]);
-
-  // Cleanup object URLs when component unmounts
-  useEffect(() => {
-    return () => {
-      Object.values(imageUrls).forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [imageUrls]);
-
-  const getCardTypeClass = (type) => {
-    if (type.includes('Monster')) return 'monster';
-    if (type.includes('Spell')) return 'spell';
-    if (type.includes('Trap')) return 'trap';
-    return '';
-  };
-
-  const handleCardClick = (card) => {
-    setSelectedCard(card);
-  };
-
-  const handleCloseDetail = () => {
-    setSelectedCard(null);
-  };
-
-  const handleAddCard = (card) => {
-    if (onCardSelect) {
-      onCardSelect(card);
+      findEmptyObjects(deck.main, 'Main deck');
+      findEmptyObjects(deck.extra, 'Extra deck');
+      findEmptyObjects(deck.side, 'Side deck');
     }
+  }, [deck]);
+
+  const getCardImage = (card) => {
+    if (!card) return null;
+    return card.image_url || card.imageUrl || null;
   };
 
-  const handleRemoveCard = (card) => {
-    if (onCardRemove) {
-      onCardRemove(card);
-    }
+  const getMonsterStats = (card) => {
+    if (!card || !card.type || !card.type.includes('Monster')) return '';
+
+    const stats = [];
+    if (card.level) stats.push(`Lv.${card.level}`);
+    if (card.rank) stats.push(`Rank ${card.rank}`);
+    if (card.linkval) stats.push(`Link-${card.linkval}`);
+    if (card.attribute) stats.push(card.attribute);
+    if (card.race) stats.push(card.race);
+
+    return stats.join(' ');
   };
 
-  const renderCardDetail = (card) => (
-    <div className="card-detail-overlay" onClick={handleCloseDetail}>
-      <div 
-        className="card-detail"
-        onClick={e => e.stopPropagation()}
-        style={{ backgroundColor: theme.colors.surface }}
-      >
+  const renderCardDetail = (card) => {
+    if (!card) return null;
+
+    return (
+      <div className="card-detail" style={{ backgroundColor: theme.colors.surface }}>
         <div className="card-detail-header">
-          <h3 style={{ color: theme.colors.text }}>{card.name}</h3>
-          <button 
-            className="close-button"
-            onClick={handleCloseDetail}
-            style={{ color: theme.colors.text }}
-          >
-            ×
-          </button>
+          <h3 style={{ color: theme.colors.text }}>{card.name || 'Unknown Card'}</h3>
+          <span className="card-type" style={{ color: theme.colors.textSecondary }}>
+            {card.type || 'Unknown Type'}
+          </span>
         </div>
         <div className="card-detail-content">
-          <img 
-            src={imageUrls[card.id]} 
-            alt={card.name}
-            className="card-detail-image"
-          />
-          <div className="card-detail-info">
-            <p style={{ color: theme.colors.text }}><strong>Type:</strong> {card.type}</p>
-            {card.attribute && <p style={{ color: theme.colors.text }}><strong>Attribute:</strong> {card.attribute}</p>}
-            {card.level && <p style={{ color: theme.colors.text }}><strong>Level:</strong> {card.level}</p>}
-            {card.atk && <p style={{ color: theme.colors.text }}><strong>ATK:</strong> {card.atk}</p>}
-            {card.def && <p style={{ color: theme.colors.text }}><strong>DEF:</strong> {card.def}</p>}
-            {card.desc && <p style={{ color: theme.colors.text }}><strong>Description:</strong> {card.desc}</p>}
-          </div>
-        </div>
-        <div className="card-detail-actions">
-          <button 
-            className="add-button"
-            onClick={() => handleAddCard(card)}
-            style={{ backgroundColor: theme.colors.success }}
-          >
-            Add to Deck
-          </button>
-          <button 
-            className="remove-button"
-            onClick={() => handleRemoveCard(card)}
-            style={{ backgroundColor: theme.colors.error }}
-          >
-            Remove from Deck
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderCardSection = (title, cards) => (
-    <div className="card-section">
-      <h3 style={{ color: theme.colors.text }}>
-        {title} ({cards.length})
-      </h3>
-      <div className="card-grid">
-        {cards.map((card, index) => (
-          <div 
-            key={`${card.id}-${index}`} 
-            className={`card-preview ${getCardTypeClass(card.type)}`}
-            onClick={() => handleCardClick(card)}
-            style={{ 
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border
-            }}
-          >
-            {imageUrls[card.id] ? (
-              <img 
-                src={imageUrls[card.id]} 
-                alt={card.name}
-                className="card-image"
-                loading="lazy"
-              />
-            ) : (
-              <div className="card-placeholder">
-                <span style={{ color: theme.colors.textSecondary }}>
-                  Loading...
-                </span>
-              </div>
+          {getCardImage(card) && (
+            <img
+              src={getCardImage(card)}
+              alt={card.name || 'Card'}
+              className="card-detail-image"
+            />
+          )}
+          <div className="card-detail-stats">
+            {card.type && card.type.includes('Monster') && (
+              <>
+                <div className="monster-stats">
+                  <span style={{ color: theme.colors.textSecondary }}>
+                    {getMonsterStats(card)}
+                  </span>
+                  <span style={{ color: theme.colors.textSecondary }}>
+                    {card.atk !== undefined && `ATK: ${card.atk}`}
+                    {card.def !== undefined && ` / DEF: ${card.def}`}
+                  </span>
+                </div>
+                {card.linkmarkers && Array.isArray(card.linkmarkers) && (
+                  <div className="link-markers">
+                    {card.linkmarkers.map((marker, index) => (
+                      <span key={index} className="link-marker">
+                        {marker}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
-            <div className="card-info">
-              <span className="card-name" style={{ color: theme.colors.text }}>
-                {card.name}
-              </span>
-              <span className="card-type" style={{ color: theme.colors.textSecondary }}>
-                {card.type}
-              </span>
-            </div>
+            <p className="card-description" style={{ color: theme.colors.text }}>
+              {card.desc || card.description || 'No description available.'}
+            </p>
           </div>
-        ))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  const renderCardSection = (title, cards, section) => {
+    // Debug the cards array
+    console.log(`Rendering ${title} section:`, cards);
+    
+    // Ensure cards is an array
+    const cardArray = Array.isArray(cards) ? cards : [];
+    
+    // Check for problematic cards (empty objects)
+    cardArray.forEach((card, index) => {
+      if (card && typeof card === 'object' && Object.keys(card).length === 0) {
+        console.error(`Empty card object in ${title} at index ${index}`);
+      }
+    });
+    
+    // Filter out empty objects that could cause rendering issues
+    const filteredCards = cardArray.filter(card => 
+      card && typeof card === 'object' && Object.keys(card).length > 0
+    );
+    
+    console.log(`Filtered ${title} cards:`, filteredCards);
+    
+    return (
+      <div className="deck-section">
+        <h3 style={{ color: theme.colors.text }}>{title} ({filteredCards.length})</h3>
+        <div className="card-grid">
+          {filteredCards.map((card, index) => (
+            <div
+              key={card.id || `${section}-card-${index}`}
+              className="card-item"
+              onClick={() => setSelectedCard(card)}
+              style={{
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border
+              }}
+            >
+              {getCardImage(card) ? (
+                <img
+                  src={getCardImage(card)}
+                  alt={card.name || 'Card'}
+                  className="card-image"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="card-placeholder">
+                  <span style={{ color: theme.colors.textSecondary }}>
+                    {card.name ? card.name.substring(0, 1) : '?'}
+                  </span>
+                </div>
+              )}
+              <div className="card-info">
+                <span className="card-name" style={{ color: theme.colors.text }}>
+                  {card.name || 'Unknown Card'}
+                </span>
+                <span className="card-type" style={{ color: theme.colors.textSecondary }}>
+                  {card.type || 'Unknown Type'}
+                </span>
+                {card.type && card.type.includes('Monster') && (
+                  <div className="monster-stats">
+                    <span style={{ color: theme.colors.textSecondary }}>
+                      {getMonsterStats(card)}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <button
+                className="remove-card"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCardRemove(card, section);
+                }}
+                style={{
+                  backgroundColor: theme.colors.error,
+                  color: theme.colors.text
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Ensure deck object has all required properties and filter out empty objects
+  const deckData = {
+    main: Array.isArray(deck.main) 
+      ? deck.main.filter(card => card && typeof card === 'object' && Object.keys(card).length > 0) 
+      : [],
+    extra: Array.isArray(deck.extra) 
+      ? deck.extra.filter(card => card && typeof card === 'object' && Object.keys(card).length > 0) 
+      : [],
+    side: Array.isArray(deck.side) 
+      ? deck.side.filter(card => card && typeof card === 'object' && Object.keys(card).length > 0) 
+      : []
+  };
 
   return (
     <div className="deck-card-display">
-      {renderCardSection('Main Deck', deck.main || [])}
-      {renderCardSection('Extra Deck', deck.extra || [])}
-      {renderCardSection('Side Deck', deck.side || [])}
-      {selectedCard && renderCardDetail(selectedCard)}
+      {renderCardSection('Main Deck', deckData.main, 'main')}
+      {renderCardSection('Extra Deck', deckData.extra, 'extra')}
+      {renderCardSection('Side Deck', deckData.side, 'side')}
+      {selectedCard && (
+        <div className="card-detail-overlay" onClick={() => setSelectedCard(null)}>
+          {renderCardDetail(selectedCard)}
+        </div>
+      )}
     </div>
   );
 };

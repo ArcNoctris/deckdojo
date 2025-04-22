@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { logoutUser } from '../../firebase/firebase';
+import { logoutUser } from '../../services/firebase/firebase';
 
 const Dashboard = () => {
   const { currentUser } = useAuth();

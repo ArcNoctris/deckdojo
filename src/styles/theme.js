@@ -45,6 +45,7 @@ const lightTheme = {
     accent: themeColors.redAccent,
     accentSecondary: themeColors.purpleAccent,
     border: themeColors.lightGray,
+    shadow: 'rgba(0, 0, 0, 0.1)',
     
     // Buttons
     buttonPrimary: themeColors.mainBlue,
@@ -146,6 +147,7 @@ const darkTheme = {
     accent: themeColors.redAccent,
     accentSecondary: themeColors.purpleAccent,
     border: themeColors.mainBlue,
+    shadow: 'rgba(0, 0, 0, 0.2)',
     
     // Buttons
     buttonPrimary: themeColors.brightGold,

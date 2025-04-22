@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { db } from '../../firebase/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { getUserDecks } from '../../services/deckService';
 import './DeckWelcome.css';
 import DeckBox from './DeckBox';
 
@@ -19,23 +18,8 @@ const DeckWelcome = () => {
       if (currentUser) {
         try {
           setLoading(true);
-          const decksRef = collection(db, 'deck');
-          const q = query(decksRef, where('uid', '==', currentUser.uid));
-          const querySnapshot = await getDocs(q);
-          
-          const deckList = [];
-          querySnapshot.forEach((doc) => {
-            const deckData = doc.data();
-            deckList.push({
-              id: doc.id,
-              ...deckData,
-              main: deckData.main || [],
-              extra: deckData.extra || [],
-              side: deckData.side || []
-            });
-          });
-          
-          setDecks(deckList);
+          const userDecks = await getUserDecks(currentUser.uid);
+          setDecks(userDecks);
         } catch (error) {
           console.error('Error fetching decks:', error);
         } finally {

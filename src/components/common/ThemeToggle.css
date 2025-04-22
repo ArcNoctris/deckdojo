@@ -2,34 +2,45 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 0;
+  width: 32px;
+  height: 32px;
   background: transparent;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   position: relative;
-  overflow: hidden;
   border: none;
+  color: inherit;
+  padding: 0;
+  margin: 0;
+  opacity: 0.7;
+}
+
+.theme-toggle:hover {
+  opacity: 1;
+}
+
+.theme-toggle:focus {
+  outline: none;
+}
+
+.theme-toggle.light {
+  color: #11465d;
+}
+
+.theme-toggle.dark {
+  color: #fcdd5a;
+}
+
+@media (max-width: 768px) {
+  .theme-toggle {
+    width: 28px;
+    height: 28px;
+  }
 }
 
 .pixel-toggle {
   border: 2px solid;
   box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
-}
-
-.theme-toggle.light {
-  color: #11465d;
-  border-color: #11465d;
-}
-
-.theme-toggle.dark {
-  color: #fcdd5a;
-  border-color: #fcdd5a;
-}
-
-.theme-toggle:hover {
-  transform: translateY(-2px);
 }
 
 .theme-toggle:active {

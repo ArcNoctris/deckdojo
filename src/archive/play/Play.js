@@ -3,6 +3,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import LifePointCalculator from './LifePointCalculator';
 import GameTimer from './GameTimer';
 import './Play.css';
+import LoadingAnimation from '../../components/common/LoadingAnimation';
+
 
 const Play = () => {
   const { theme } = useTheme();
@@ -115,17 +117,7 @@ const Play = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="play-loading" style={{ backgroundColor: theme.colors.background }}>
-        <div className="loading-animation">
-          <svg className="loading-logo" viewBox="120.216 73.984 264.63 268.193" xmlns="http://www.w3.org/2000/svg">
-            <path className="loading-path" fill={theme.colors.secondary} d="M 290.32 80.49 L 289.75 85.48 Q 287.86 89.51 285.18 92.96 Q 284.50 93.83 283.54 94.39 Q 283.11 94.64 282.85 95.07 C 280.61 98.77 276.47 100.41 272.93 102.57 Q 272.39 102.90 272.33 102.28 Q 272.29 101.92 272.51 101.46 Q 274.83 97.91 277.62 94.75 Q 280.68 91.29 282.28 88.84 Q 284.33 85.72 286.43 82.53 L 289.64 77.48 Q 289.94 77.02 290.09 77.55 Q 290.47 78.88 290.32 80.49 Z"/>
-            <path className="loading-path" fill={theme.colors.primary} d="M 246.75 81.86 Q 247.88 86.34 247.38 91.15 Q 247.33 91.58 247.77 91.58 L 258.80 91.55 A 1.09 1.08 -1.7 0 0 259.89 90.40 Q 259.64 86.02 261.56 82.50 Q 267.87 79.22 274.75 81.45 C 276.57 82.04 277.40 83.21 278.76 84.37 Q 279.17 84.72 279.71 84.67 Q 282.98 84.39 286.43 82.53 Q 284.33 85.72 282.28 88.84 Q 280.68 91.29 277.62 94.75 Q 274.83 97.91 272.51 101.46 Q 272.37 101.41 272.22 101.39 Q 271.94 101.35 271.89 101.07 L 271.77 100.49 C 272.85 98.00 275.69 88.31 272.56 86.65 Q 271.82 86.26 271.71 86.52 L 268.10 86.61 Q 267.48 86.62 267.70 87.20 C 270.09 93.47 263.24 103.62 259.01 108.74 Q 256.34 111.99 250.33 115.88 Q 241.95 121.32 239.33 122.36 Q 236.85 123.34 234.55 124.24 C 229.19 124.35 228.02 126.95 225.28 130.43 Q 225.57 127.13 225.51 124.51 Q 225.48 122.88 224.56 121.56 Q 224.27 121.14 223.77 121.09 Q 222.87 121.00 221.58 121.35 Q 216.82 123.59 212.99 127.96 Q 210.86 130.39 209.56 134.07 Q 209.51 133.91 209.46 133.76 Q 208.23 133.54 208.33 132.49"/>
-          </svg>
-        </div>
-        <p className="loading-text" style={{ color: theme.colors.text }}>Loading Duel Arena...</p>
-      </div>
-    );
+    return <LoadingAnimation fullScreen={true}/>;
   }
 
   return (
