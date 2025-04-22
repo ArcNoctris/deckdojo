@@ -20,8 +20,12 @@
 .env
 
 # Firebase
-/src/firebase/config.js
+/src/services/firebase/config.js
+
+*/config.js
 
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+src/services/firebase/config.js
