@@ -7,6 +7,9 @@
 .deck-welcome-header {
   text-align: center;
   margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .deck-welcome-header h1 {
@@ -18,6 +21,30 @@
 
 .deck-welcome-header p {
   font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.create-deck-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.create-deck-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.plus-icon-small {
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+  font-weight: bold;
 }
 
 .deck-grid {
@@ -25,7 +52,7 @@
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 2rem;
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 0 auto 2rem;
 }
 
 .deck-link {
@@ -75,6 +102,42 @@
   margin: 0 auto;
 }
 
+/* Pagination styles */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pagination button {
+  padding: 0.5rem 1rem;
+  border: 1px solid;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+}
+
+.page-info {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
   .deck-welcome-header h1 {
@@ -84,5 +147,9 @@
   .deck-grid {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1.5rem;
+  }
+  
+  .pagination {
+    gap: 0.5rem;
   }
 }

@@ -1,5 +1,5 @@
 // MongoDB Service - Client-side adapter for MongoDB API
-// This service uses real API for cards and mock data for decks until deck endpoints are ready
+// This service uses real API for cards and deck operations
 
 // API base URL for the real MongoDB API
 const API_BASE_URL = 'https://web-production-d4ebf.up.railway.app';
@@ -60,34 +60,6 @@ const MOCK_CARDS = [
     image_url: "https://images.ygoprodeck.com/images/cards/55144522.jpg"
   }
 ];
-
-// Sample deck data for development (keeping deck operations as mock for now)
-const MOCK_DECKS = {
-  "user123": [
-    {
-      id: "deck1",
-      name: "Blue-Eyes Deck",
-      main: [],
-      extra: [],
-      side: [],
-      mainColor: "#1a237e",
-      uid: "user123",
-      createdAt: new Date(2023, 0, 15).toISOString(),
-      updatedAt: new Date(2023, 2, 20).toISOString()
-    },
-    {
-      id: "deck2",
-      name: "Dark Magician Deck",
-      main: [],
-      extra: [],
-      side: [],
-      mainColor: "#4a148c",
-      uid: "user123",
-      createdAt: new Date(2023, 1, 5).toISOString(),
-      updatedAt: new Date(2023, 1, 10).toISOString()
-    }
-  ]
-};
 
 // Helper to validate and sanitize card objects
 const validateCard = (card, source = 'unknown') => {
@@ -251,21 +223,7 @@ export const getRandomCards = async (count = 10) => {
   }
 };
 
-// Helper function to find decks for a user (mock implementation)
-const getDecksForUser = (userId) => {
-  return MOCK_DECKS[userId] || [];
-};
-
-// Helper function to find a deck by ID (mock implementation)
-const findDeckById = (deckId) => {
-  for (const userId in MOCK_DECKS) {
-    const deck = MOCK_DECKS[userId].find(d => d.id === deckId);
-    if (deck) return deck;
-  }
-  return null;
-};
-
-// Deck Operations - Still using mock implementation for now
+// Deck Operations - Using real MongoDB API
 export const createDeck = async (deckData) => {
   try {
     console.log('[mongodbService] Creating deck:', deckData);
@@ -274,29 +232,95 @@ export const createDeck = async (deckData) => {
       throw new Error('Invalid deck data');
     }
     
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 600));
-    
-    // Generate a unique ID
-    const newId = `deck${Date.now()}`;
-    
-    // Create the deck in our mock data
-    const newDeck = {
-      id: newId,
-      ...deckData,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+    // Format main, extra, and side deck items
+    const formatDeckItems = (cards) => {
+      return Array.isArray(cards) 
+        ? cards.map(card => ({
+            card_id: card.id,
+            quantity: 1,
+            card: card
+          }))
+        : [];
     };
     
-    // Add to mock decks
-    const userId = deckData.uid;
-    if (!MOCK_DECKS[userId]) {
-      MOCK_DECKS[userId] = [];
-    }
-    MOCK_DECKS[userId].push(newDeck);
+    // Format deck data according to API requirements
+    const deckPayload = {
+      name: deckData.name || 'New Deck',
+      description: deckData.description || '',
+      is_public: deckData.visibility === 'public',
+      color: deckData.mainColor || '#000000',
+      tags: deckData.tags || [],
+      format: deckData.format || 'casual',
+      user_id: deckData.uid || deckData.user?.uid,
+      username: deckData.user?.username || 'Anonymous',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      current_version: 1,
+      versions: [
+        {
+          version_number: 1,
+          created_at: new Date().toISOString(),
+          name: deckData.name || 'New Deck',
+          description: deckData.description || '',
+          main_deck: formatDeckItems(deckData.main),
+          extra_deck: formatDeckItems(deckData.extra),
+          side_deck: formatDeckItems(deckData.side)
+        }
+      ],
+      main_deck: formatDeckItems(deckData.main),
+      extra_deck: formatDeckItems(deckData.extra),
+      side_deck: formatDeckItems(deckData.side),
+      stats: {
+        main_count: Array.isArray(deckData.main) ? deckData.main.length : 0,
+        extra_count: Array.isArray(deckData.extra) ? deckData.extra.length : 0,
+        side_count: Array.isArray(deckData.side) ? deckData.side.length : 0,
+        monster_count: Array.isArray(deckData.main) 
+          ? deckData.main.filter(card => card.type && card.type.includes('Monster')).length 
+          : 0,
+        spell_count: Array.isArray(deckData.main) 
+          ? deckData.main.filter(card => card.type && card.type.includes('Spell')).length 
+          : 0,
+        trap_count: Array.isArray(deckData.main) 
+          ? deckData.main.filter(card => card.type && card.type.includes('Trap')).length 
+          : 0,
+        avg_level: Array.isArray(deckData.main) && deckData.main.length > 0
+          ? deckData.main.reduce((sum, card) => sum + (card.level || 0), 0) / deckData.main.length
+          : 0,
+        archetypes: Array.isArray(deckData.main)
+          ? [...new Set(deckData.main.map(card => card.archetype).filter(Boolean))]
+          : []
+      }
+    };
     
-    console.log(`[mongodbService] Deck created with ID: ${newId}`);
-    return newId;
+    console.log('[mongodbService] Prepared deck payload:', deckPayload);
+    
+    // Make the API request
+    const response = await fetch(`${API_BASE_URL}/decks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(deckPayload)
+    });
+    
+    if (!response.ok) {
+      console.error(`[mongodbService] API error: ${response.status} ${response.statusText}`);
+      
+      // Try to get more error details
+      try {
+        const errorData = await response.json();
+        console.error('[mongodbService] Error details:', errorData);
+      } catch (e) {
+        console.error('[mongodbService] Could not parse error response');
+      }
+      
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const result = await response.json();
+    
+    console.log(`[mongodbService] Deck created with ID: ${result.id || result._id}`);
+    return result.id || result._id;
   } catch (error) {
     console.error('[mongodbService] Error creating deck:', error);
     throw error;
@@ -308,27 +332,133 @@ export const updateDeck = async (deckId, deckData) => {
     console.log(`[mongodbService] Updating deck ${deckId}:`, deckData);
     
     if (!deckId) {
+      console.error('[mongodbService] Invalid deck ID: empty or undefined');
       throw new Error('Invalid deck ID');
     }
     
+    // Make sure the deck ID is a string
+    const formattedDeckId = String(deckId).trim();
+    
+    if (!formattedDeckId || formattedDeckId === 'undefined' || formattedDeckId === 'null') {
+      console.error(`[mongodbService] Invalid deck ID after formatting: "${formattedDeckId}"`);
+      throw new Error('Invalid deck ID format');
+    }
+    
+    console.log(`[mongodbService] Formatted deck ID: ${formattedDeckId}`);
+    
     if (!deckData || typeof deckData !== 'object') {
+      console.error('[mongodbService] Invalid deck data:', deckData);
       throw new Error('Invalid deck data');
     }
     
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Find the deck
-    const deck = findDeckById(deckId);
-    if (!deck) {
-      throw new Error(`Deck with ID ${deckId} not found`);
+    // Get the existing deck first to handle versioning correctly
+    const existingDeck = await getDeckById(formattedDeckId);
+    if (!existingDeck) {
+      console.error(`[mongodbService] Deck with ID ${formattedDeckId} not found`);
+      throw new Error(`Deck with ID ${formattedDeckId} not found`);
     }
     
-    // Update deck
-    Object.assign(deck, deckData, { updatedAt: new Date().toISOString() });
+    console.log(`[mongodbService] Found existing deck: ${existingDeck.name}`);
     
-    console.log(`[mongodbService] Deck ${deckId} updated successfully`);
-    return { ...deck };
+    // Format main, extra, and side deck items
+    const formatDeckItems = (cards) => {
+      return Array.isArray(cards) 
+        ? cards.map(card => ({
+            card_id: card.id,
+            quantity: 1,
+            card: card
+          }))
+        : [];
+    };
+    
+    // Get the current version number
+    const currentVersion = (existingDeck.current_version || 0) + 1;
+    
+    // Prepare the update payload
+    const updatePayload = {
+      name: deckData.name || existingDeck.name,
+      description: deckData.description || existingDeck.description || '',
+      is_public: deckData.visibility === 'public' || existingDeck.is_public || false,
+      color: deckData.mainColor || existingDeck.color || '#000000',
+      tags: deckData.tags || existingDeck.tags || [],
+      format: deckData.format || existingDeck.format || 'casual',
+      user_id: deckData.uid || deckData.user?.uid || existingDeck.user_id,
+      username: deckData.user?.username || existingDeck.username || 'Anonymous',
+      created_at: existingDeck.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      current_version: currentVersion,
+      
+      // Add the new version
+      versions: [
+        ...(Array.isArray(existingDeck.versions) ? existingDeck.versions : []),
+        {
+          version_number: currentVersion,
+          created_at: new Date().toISOString(),
+          name: deckData.name || existingDeck.name,
+          description: deckData.description || existingDeck.description || '',
+          main_deck: formatDeckItems(deckData.main),
+          extra_deck: formatDeckItems(deckData.extra),
+          side_deck: formatDeckItems(deckData.side)
+        }
+      ],
+      
+      // Update the current deck contents
+      main_deck: formatDeckItems(deckData.main),
+      extra_deck: formatDeckItems(deckData.extra),
+      side_deck: formatDeckItems(deckData.side),
+      
+      // Update stats
+      stats: {
+        main_count: Array.isArray(deckData.main) ? deckData.main.length : 0,
+        extra_count: Array.isArray(deckData.extra) ? deckData.extra.length : 0,
+        side_count: Array.isArray(deckData.side) ? deckData.side.length : 0,
+        monster_count: Array.isArray(deckData.main) 
+          ? deckData.main.filter(card => card.type && card.type.includes('Monster')).length 
+          : 0,
+        spell_count: Array.isArray(deckData.main) 
+          ? deckData.main.filter(card => card.type && card.type.includes('Spell')).length 
+          : 0,
+        trap_count: Array.isArray(deckData.main) 
+          ? deckData.main.filter(card => card.type && card.type.includes('Trap')).length 
+          : 0,
+        avg_level: Array.isArray(deckData.main) && deckData.main.length > 0
+          ? deckData.main.reduce((sum, card) => sum + (card.level || 0), 0) / deckData.main.length
+          : 0,
+        archetypes: Array.isArray(deckData.main)
+          ? [...new Set(deckData.main.map(card => card.archetype).filter(Boolean))]
+          : []
+      }
+    };
+    
+    console.log(`[mongodbService] Making API request to update deck ${formattedDeckId}`);
+    console.log('[mongodbService] Update payload:', updatePayload);
+    
+    // Make the API request
+    const response = await fetch(`${API_BASE_URL}/decks/${formattedDeckId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updatePayload)
+    });
+    
+    if (!response.ok) {
+      console.error(`[mongodbService] API error: ${response.status} ${response.statusText}`);
+      
+      // Try to get more error details
+      try {
+        const errorData = await response.json();
+        console.error('[mongodbService] Error details:', errorData);
+      } catch (e) {
+        console.error('[mongodbService] Could not parse error response');
+      }
+      
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const result = await response.json();
+    console.log(`[mongodbService] Deck ${formattedDeckId} updated successfully`);
+    return result;
   } catch (error) {
     console.error('[mongodbService] Error updating deck:', error);
     throw error;
@@ -344,42 +474,201 @@ export const getDeckById = async (deckId) => {
       return null;
     }
     
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Make sure the deck ID is a string
+    const formattedDeckId = String(deckId).trim();
     
-    // Find the deck
-    const deck = findDeckById(deckId);
-    
-    if (deck) {
-      console.log(`[mongodbService] Deck ${deckId} retrieved successfully`);
-      return { ...deck };
+    if (!formattedDeckId || formattedDeckId === 'undefined' || formattedDeckId === 'null') {
+      console.error(`[mongodbService] Invalid deck ID after formatting: "${formattedDeckId}"`);
+      return null;
     }
     
-    console.warn(`[mongodbService] Deck with ID ${deckId} not found`);
-    return null;
+    console.log(`[mongodbService] Formatted deck ID: ${formattedDeckId}`);
+    
+    // Make the API request
+    const response = await fetch(`${API_BASE_URL}/decks/${formattedDeckId}`);
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.warn(`[mongodbService] Deck with ID ${formattedDeckId} not found`);
+        return null;
+      }
+      console.error(`[mongodbService] API error: ${response.status} ${response.statusText}`);
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const deckData = await response.json();
+    
+    if (!deckData) {
+      console.error('[mongodbService] API returned empty deck data');
+      return null;
+    }
+    
+    console.log(`[mongodbService] Retrieved deck data for ${deckData.name || 'unknown deck'}`);
+    
+    // Extract cards from the deck items
+    const extractCards = (deckItems) => {
+      return Array.isArray(deckItems)
+        ? deckItems.map(item => {
+            // If card data is embedded in the item
+            if (item.card) {
+              return item.card;
+            }
+            // If we only have card_id, create minimal card object
+            return { id: item.card_id };
+          })
+        : [];
+    };
+    
+    // Transform the API response to match the expected format for the frontend
+    const deck = {
+      id: deckData.id || deckData._id,
+      name: deckData.name,
+      description: deckData.description || '',
+      visibility: deckData.is_public ? 'public' : 'private',
+      mainColor: deckData.color || '#000000',
+      tags: deckData.tags || [],
+      uid: deckData.user_id,
+      username: deckData.username,
+      // Extract cards from the deck structures
+      main: extractCards(deckData.main_deck),
+      extra: extractCards(deckData.extra_deck),
+      side: extractCards(deckData.side_deck),
+      current_version: deckData.current_version,
+      versions: deckData.versions || [],
+      createdAt: deckData.created_at,
+      updatedAt: deckData.updated_at,
+      // Include stats for additional info
+      stats: deckData.stats || {
+        main_count: 0,
+        extra_count: 0,
+        side_count: 0
+      }
+    };
+    
+    console.log(`[mongodbService] Deck ${formattedDeckId} retrieved successfully`);
+    return deck;
   } catch (error) {
     console.error('[mongodbService] Error getting deck by ID:', error);
     throw error;
   }
 };
 
-export const getUserDecks = async (userId) => {
+export const getUserDecks = async (userId, page = 1, pageSize = 20, includePrivate = true) => {
   try {
-    console.log(`[mongodbService] Getting decks for user: ${userId}`);
+    console.log(`[mongodbService] Getting decks for user: ${userId} (page ${page}, size ${pageSize}, includePrivate: ${includePrivate})`);
     
     if (!userId) {
       console.error('[mongodbService] Invalid user ID: empty or undefined');
       return [];
     }
     
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 400));
+    // Build the URL with pagination and privacy parameters
+    const url = `${API_BASE_URL}/decks/user/${userId}?page=${page}&page_size=${pageSize}&include_private=${includePrivate}`;
+    console.log(`[mongodbService] Fetching decks with URL: ${url}`);
     
-    // Get decks for the user
-    const decks = getDecksForUser(userId);
+    // Make the API request with explicit headers
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      console.error(`[mongodbService] API error: ${response.status} ${response.statusText}`);
+      
+      // Try to get error details
+      try {
+        const errorText = await response.text();
+        console.error('[mongodbService] Error response:', errorText);
+      } catch (e) {
+        console.error('[mongodbService] Could not read error response');
+      }
+      
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const responseText = await response.text();
+    console.log('[mongodbService] Raw API response:', responseText);
+    
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('[mongodbService] Error parsing JSON response:', e);
+      return [];
+    }
+    
+    console.log('[mongodbService] Parsed API response:', data);
+    
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      console.log('[mongodbService] No decks found for user');
+      return [];
+    }
+    
+    // Extract cards from the deck items
+    const extractCards = (deckItems) => {
+      return Array.isArray(deckItems)
+        ? deckItems.map(item => {
+            // If card data is embedded in the item
+            if (item.card) {
+              return item.card;
+            }
+            // If we only have card_id, create minimal card object
+            return { id: item.card_id };
+          })
+        : [];
+    };
+    
+    // Check if we have a different response structure
+    let decksArray = data;
+    
+    // Handle potential wrapped response structure
+    if (!Array.isArray(data) && data.items && Array.isArray(data.items)) {
+      decksArray = data.items;
+      console.log('[mongodbService] Found items array in response, using it');
+    } else if (!Array.isArray(data) && data.decks && Array.isArray(data.decks)) {
+      decksArray = data.decks;
+      console.log('[mongodbService] Found decks array in response, using it');
+    } else if (!Array.isArray(data)) {
+      console.error('[mongodbService] Unexpected response format, expected array or object with items/decks array:', data);
+      return [];
+    }
+    
+    console.log(`[mongodbService] Processing ${decksArray.length} decks`);
+    
+    // Transform each deck to match the expected format
+    const decks = decksArray.map(deckData => {
+      console.log('[mongodbService] Processing deck:', deckData.name || 'Unnamed deck');
+      
+      return {
+        id: deckData.id || deckData._id,
+        name: deckData.name,
+        description: deckData.description || '',
+        visibility: deckData.is_public ? 'public' : 'private',
+        mainColor: deckData.color || '#000000',
+        tags: deckData.tags || [],
+        uid: deckData.user_id,
+        username: deckData.username,
+        // Extract cards from the deck structures
+        main: extractCards(deckData.main_deck),
+        extra: extractCards(deckData.extra_deck),
+        side: extractCards(deckData.side_deck),
+        current_version: deckData.current_version,
+        versions: deckData.versions || [],
+        createdAt: deckData.created_at,
+        updatedAt: deckData.updated_at,
+        // Include stats for additional info
+        stats: deckData.stats || {
+          main_count: 0,
+          extra_count: 0,
+          side_count: 0
+        }
+      };
+    });
     
     console.log(`[mongodbService] Retrieved ${decks.length} decks for user ${userId}`);
-    return [...decks];
+    return decks;
   } catch (error) {
     console.error('[mongodbService] Error getting user decks:', error);
     throw error;
@@ -394,20 +683,17 @@ export const deleteDeck = async (deckId) => {
       throw new Error('Invalid deck ID');
     }
     
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 400));
+    // Make the API request
+    const response = await fetch(`${API_BASE_URL}/decks/${deckId}`, {
+      method: 'DELETE'
+    });
     
-    // Find the deck and remove it
-    for (const userId in MOCK_DECKS) {
-      const deckIndex = MOCK_DECKS[userId].findIndex(d => d.id === deckId);
-      if (deckIndex !== -1) {
-        MOCK_DECKS[userId].splice(deckIndex, 1);
-        console.log(`[mongodbService] Deck ${deckId} deleted successfully`);
-        return { success: true };
-      }
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
     
-    throw new Error(`Deck with ID ${deckId} not found`);
+    console.log(`[mongodbService] Deck ${deckId} deleted successfully`);
+    return { success: true };
   } catch (error) {
     console.error('[mongodbService] Error deleting deck:', error);
     throw error;

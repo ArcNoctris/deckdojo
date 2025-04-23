@@ -12,20 +12,37 @@ const DeckBuilder = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { currentUser } = useAuth();
+  
+  console.log('DeckBuilder mounted with deckId:', deckId);
+  
   const [deck, setDeck] = useState({
     name: '',
+    description: '',
     main: [],
     extra: [],
     side: [],
     mainColor: theme?.colors?.accent || '#000000',
     uid: currentUser?.uid || '',
+    visibility: 'private',
+    tags: [],
     createdAt: null,
     updatedAt: null
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const isNewDeck = deckId === 'new';
+  
+  // Fix for isNewDeck check
+  const isNewDeck = deckId === 'new' || !deckId;
+  
+  console.log('isNewDeck value:', isNewDeck);
+
+  // More debugging
+  useEffect(() => {
+    console.log('DeckBuilder effect running with:');
+    console.log('- deckId:', deckId);
+    console.log('- isNewDeck:', isNewDeck);
+  }, [deckId, isNewDeck]);
 
   useEffect(() => {
     const fetchDeck = async () => {
@@ -134,6 +151,9 @@ const DeckBuilder = () => {
   };
 
   const saveDeck = async () => {
+    console.log('Saving deck, isNewDeck:', isNewDeck);
+    console.log('Current deckId:', deckId);
+    
     if (!currentUser) {
       setError('You must be logged in to save decks');
       return;
@@ -154,16 +174,40 @@ const DeckBuilder = () => {
         extra: Array.isArray(deck.extra) ? deck.extra : [],
         side: Array.isArray(deck.side) ? deck.side : [],
         uid: currentUser.uid,
+        user: {
+          uid: currentUser.uid,
+          username: currentUser.displayName || 'Anonymous',
+          photoURL: currentUser.photoURL || ''
+        },
+        description: deck.description || '',
+        visibility: deck.visibility || 'private',
         mainColor: deck.mainColor || theme?.colors?.accent || '#000000',
+        tags: deck.tags || [],
         updatedAt: new Date()
       };
 
-      if (isNewDeck) {
+      // Force create if it's a new deck, has a default name, or doesn't have an ID
+      const shouldCreateNew = isNewDeck || 
+                             !deckId || 
+                             deckId === 'undefined' || 
+                             deckId === 'null' ||
+                             deck.name === 'New Deck';
+      
+      console.log('Should create new deck?', shouldCreateNew);
+
+      if (shouldCreateNew) {
+        console.log('Creating new deck');
         deckData.createdAt = new Date();
         const newDeckId = await createDeck(deckData);
         navigate(`/decks/${newDeckId}`);
       } else {
-        await updateDeck(deckId, deckData);
+        // Only update if we're certain we have a valid existing deck ID
+        if (!deckId) {
+          setError('Invalid deck ID');
+          return;
+        }
+        console.log('Updating deck with ID:', deckId);
+        await updateDeck(deckId.toString(), deckData);
         setError(null);
       }
     } catch (error) {
@@ -211,18 +255,33 @@ const DeckBuilder = () => {
             </div>
             
             <div className="form-group">
+              <label htmlFor="description" style={{ color: theme.colors.text }}>Description</label>
+              <input
+                type="text"
+                id="description"
+                name="description"
+                value={deck.description || ''}
+                onChange={handleInputChange}
+                placeholder="Enter deck description"
+                style={{ 
+                  backgroundColor: theme.colors.cardBackground,
+                  color: theme.colors.text,
+                  borderColor: theme.colors.border
+                }}
+              />
+            </div>
+            
+            <div className="form-group">
               <label htmlFor="mainColor" style={{ color: theme.colors.text }}>Deck Color</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                 <input
                   type="color"
                   id="mainColor"
                   name="mainColor"
-
                   value={deck.mainColor || '#000000'}
                   onChange={handleColorChange}
                   style={{ width: '50px', height: '30px',accentColor: deck.mainColor, backgroundColor: deck.mainColor}}
                 />
-                
               </div>
             </div>
           </div>

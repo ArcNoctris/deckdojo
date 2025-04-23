@@ -52,7 +52,9 @@ function App() {
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/decks" element={<DeckWelcome />} />
-                  <Route path="/decks/new" element={<DeckBuilder />} />
+                  <Route path="/decks/new" element={
+                    <DeckBuilder />
+                  } />
                   <Route path="/decks/:deckId" element={<DeckBuilder />} />
                   <Route path="/duel" element={<DuelLobby />} />
                   <Route path="/duel/:sessionId" element={<Duel />} />

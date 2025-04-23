@@ -12,6 +12,8 @@ const DeckWelcome = () => {
   const navigate = useNavigate();
   const [decks, setDecks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const decksPerPage = 12;
 
   useEffect(() => {
     const fetchDecks = async () => {
@@ -35,6 +37,14 @@ const DeckWelcome = () => {
     navigate(`/decks/${deck.id}`);
   };
 
+  // Get current decks for pagination
+  const indexOfLastDeck = currentPage * decksPerPage;
+  const indexOfFirstDeck = indexOfLastDeck - decksPerPage;
+  const currentDecks = decks.slice(indexOfFirstDeck, indexOfLastDeck);
+  const totalPages = Math.ceil(decks.length / decksPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
     <div 
       className="deck-welcome-container"
@@ -43,8 +53,26 @@ const DeckWelcome = () => {
       <div className="deck-welcome-header">
         <h1 style={{ color: theme.colors.text }}>My Decks</h1>
         <p style={{ color: theme.colors.textSecondary }}>
-          Create and manage your YuGiOh decks
+          Create and manage your card decks
         </p>
+        
+        {console.log('Create deck link URL:', '/decks/new')}
+        <Link 
+          to="/decks/new" 
+          onClick={(e) => {
+            // Ensure we're properly creating a new deck
+            e.preventDefault();
+            // Force a full page load to ensure clean state
+            window.location.href = '/decks/new';
+          }}
+          className="create-deck-button" 
+          style={{ 
+            backgroundColor: theme.colors.accent,
+            color: theme.colors.white
+          }}
+        >
+          <span className="plus-icon-small">+</span> Create New Deck
+        </Link>
       </div>
 
       {loading ? (
@@ -52,36 +80,61 @@ const DeckWelcome = () => {
           Loading your decks...
         </div>
       ) : (
-        <div className="deck-grid">
-          {decks.map(deck => (
-            <div 
-              key={deck.id}
-              className="deck-link"
-              onClick={() => handleDeckClick(deck)}
-            >
-              <DeckBox 
-                name={deck.name} 
-                main={deck.main}
-                extra={deck.extra}
-                side={deck.side}
-                mainColor={deck.mainColor || theme.colors.accent}
-              />
-            </div>
-          ))}
+        <>
+          <div className="deck-grid">
+            {currentDecks.map(deck => (
+              <div 
+                key={deck.id}
+                className="deck-link"
+                onClick={() => handleDeckClick(deck)}
+              >
+                <DeckBox 
+                  name={deck.name} 
+                  main={deck.main}
+                  extra={deck.extra}
+                  side={deck.side}
+                  mainColor={deck.mainColor || theme.colors.accent}
+                />
+              </div>
+            ))}
+          </div>
           
-          <Link to="/decks/new" className="deck-link new-deck">
-            <div 
-              className="new-deck-box"
-              style={{ 
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border
-              }}
-            >
-              <div className="plus-icon" style={{ color: theme.colors.accent }}>+</div>
-              <p style={{ color: theme.colors.text }}>Create New Deck</p>
+          {totalPages > 1 && (
+            <div className="pagination-container">
+              <div className="pagination">
+                <button 
+                  onClick={() => paginate(currentPage - 1)} 
+                  disabled={currentPage === 1}
+                  style={{
+                    backgroundColor: theme.colors.surface,
+                    color: theme.colors.text,
+                    borderColor: theme.colors.border,
+                    opacity: currentPage === 1 ? 0.5 : 1
+                  }}
+                >
+                  Previous
+                </button>
+                
+                <div className="page-info" style={{ color: theme.colors.text }}>
+                  Page {currentPage} of {totalPages}
+                </div>
+                
+                <button 
+                  onClick={() => paginate(currentPage + 1)} 
+                  disabled={currentPage === totalPages}
+                  style={{
+                    backgroundColor: theme.colors.surface,
+                    color: theme.colors.text,
+                    borderColor: theme.colors.border,
+                    opacity: currentPage === totalPages ? 0.5 : 1
+                  }}
+                >
+                  Next
+                </button>
+              </div>
             </div>
-          </Link>
-        </div>
+          )}
+        </>
       )}
 
       {!loading && decks.length === 0 && (
