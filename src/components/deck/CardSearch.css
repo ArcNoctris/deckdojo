@@ -60,41 +60,86 @@
 }
 
 .search-results {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
   margin-top: 1rem;
 }
 
-.card-result {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid;
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.card-item {
+  position: relative;
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: 100%;
 }
 
-.card-result:hover {
-  transform: translateY(-2px);
+.card-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-image-container {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 146%; /* Aspect ratio for Yu-Gi-Oh! cards (2.5:3.65) */
+  overflow: hidden;
 }
 
 .card-image {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 200px;
+  height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
 }
 
-.card-info {
-  padding: 0.5rem;
+.card-item:hover .card-image {
+  transform: scale(1.05);
+}
+
+.card-placeholder {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 146%;
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+  color: white;
+}
+
+.card-details-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.75rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
+  color: white;
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+}
+
+.card-item:hover .card-details-overlay {
+  opacity: 1;
 }
 
 .card-name {
+  font-size: 0.9rem;
   font-weight: bold;
+  margin-bottom: 0.25rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -111,6 +156,13 @@
   border-radius: 4px;
   margin: 1rem 0;
   text-align: center;
+}
+
+.no-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2rem;
+  font-style: italic;
 }
 
 @media (max-width: 768px) {

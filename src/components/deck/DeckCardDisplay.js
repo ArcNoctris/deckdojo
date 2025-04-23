@@ -38,7 +38,13 @@ const DeckCardDisplay = ({ deck, onCardSelect, onCardRemove }) => {
 
   const getCardImage = (card) => {
     if (!card) return null;
-    return card.image_url || card.imageUrl || null;
+    
+    // Check all possible image URL properties
+    if (card.card_images && card.card_images[0] && card.card_images[0].image_url) {
+      return card.card_images[0].image_url;
+    }
+    
+    return card.image_url || null;
   };
 
   const getMonsterStats = (card) => {
@@ -141,34 +147,31 @@ const DeckCardDisplay = ({ deck, onCardSelect, onCardRemove }) => {
               }}
             >
               {getCardImage(card) ? (
-                <img
-                  src={getCardImage(card)}
-                  alt={card.name || 'Card'}
-                  className="card-image"
-                  loading="lazy"
-                />
+                <div className="card-image-container">
+                  <img
+                    src={getCardImage(card)}
+                    alt={card.name || 'Card'}
+                    className="card-image"
+                    loading="lazy"
+                  />
+                  <div className="card-details-overlay">
+                    <span className="card-name" style={{ color: '#ffffff' }}>
+                      {card.name || 'Unknown Card'}
+                    </span>
+                  </div>
+                </div>
               ) : (
                 <div className="card-placeholder">
                   <span style={{ color: theme.colors.textSecondary }}>
                     {card.name ? card.name.substring(0, 1) : '?'}
                   </span>
-                </div>
-              )}
-              <div className="card-info">
-                <span className="card-name" style={{ color: theme.colors.text }}>
-                  {card.name || 'Unknown Card'}
-                </span>
-                <span className="card-type" style={{ color: theme.colors.textSecondary }}>
-                  {card.type || 'Unknown Type'}
-                </span>
-                {card.type && card.type.includes('Monster') && (
-                  <div className="monster-stats">
-                    <span style={{ color: theme.colors.textSecondary }}>
-                      {getMonsterStats(card)}
+                  <div className="card-details-overlay">
+                    <span className="card-name" style={{ color: '#ffffff' }}>
+                      {card.name || 'Unknown Card'}
                     </span>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
               <button
                 className="remove-card"
                 onClick={(e) => {
@@ -177,10 +180,10 @@ const DeckCardDisplay = ({ deck, onCardSelect, onCardRemove }) => {
                 }}
                 style={{
                   backgroundColor: theme.colors.error,
-                  color: theme.colors.text
+                  color: theme.colors.white
                 }}
               >
-                Remove
+                ×
               </button>
             </div>
           ))}

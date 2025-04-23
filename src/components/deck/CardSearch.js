@@ -347,9 +347,19 @@ const CardSearch = ({ onCardSelect }) => {
                   borderColor: theme.colors.border
                 }}
               >
-                {card.card_images[0].image_url_small ? (
-                  <div className="card-image">
-                    <img src={card.card_images[0].image_url_small} alt={card.name || 'Card'} />
+                {(card.card_images && card.card_images[0]?.image_url) || card.image_url ? (
+                  <div className="card-image-container">
+                    <img 
+                      src={card.card_images ? card.card_images[0]?.image_url : (card.image_url || '')} 
+                      alt={card.name || 'Card'} 
+                      className="card-image"
+                      loading="lazy"
+                    />
+                    <div className="card-details-overlay">
+                      <div className="card-name" style={{ color: theme.colors.white }}>
+                        {card.name || 'Unknown Card'}
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div 
@@ -357,21 +367,13 @@ const CardSearch = ({ onCardSelect }) => {
                     style={{ backgroundColor: theme.colors.accent }}
                   >
                     {card.name ? card.name.substring(0, 1) : '?'}
+                    <div className="card-details-overlay">
+                      <div className="card-name" style={{ color: theme.colors.white }}>
+                        {card.name || 'Unknown Card'}
+                      </div>
+                    </div>
                   </div>
                 )}
-                <div className="card-details">
-                  <div className="card-name" style={{ color: theme.colors.text }}>
-                    {card.name || 'Unknown Card'}
-                  </div>
-                  <div className="card-type" style={{ color: theme.colors.textSecondary }}>
-                    {card.type || 'Unknown Type'}
-                  </div>
-                  {card.atk !== undefined && card.def !== undefined && (
-                    <div className="card-stats" style={{ color: theme.colors.textSecondary }}>
-                      ATK: {card.atk !== undefined ? card.atk : '?'} / DEF: {card.def !== undefined ? card.def : '?'}
-                    </div>
-                  )}
-                </div>
               </div>
             ))}
           </div>

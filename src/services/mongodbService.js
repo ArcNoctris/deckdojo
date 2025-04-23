@@ -235,11 +235,25 @@ export const createDeck = async (deckData) => {
     // Format main, extra, and side deck items
     const formatDeckItems = (cards) => {
       return Array.isArray(cards) 
-        ? cards.map(card => ({
-            card_id: card.id,
-            quantity: 1,
-            card: card
-          }))
+        ? cards.map(card => {
+            // Ensure card image data is preserved
+            // If card already has card_images, keep it, otherwise check for image_url
+            if (!card.card_images && card.image_url) {
+              card = {
+                ...card,
+                card_images: [{
+                  image_url: card.image_url,
+                  image_url_small: card.image_url
+                }]
+              };
+            }
+            
+            return {
+              card_id: card.id,
+              quantity: 1,
+              card: card
+            };
+          })
         : [];
     };
     
@@ -363,11 +377,25 @@ export const updateDeck = async (deckId, deckData) => {
     // Format main, extra, and side deck items
     const formatDeckItems = (cards) => {
       return Array.isArray(cards) 
-        ? cards.map(card => ({
-            card_id: card.id,
-            quantity: 1,
-            card: card
-          }))
+        ? cards.map(card => {
+            // Ensure card image data is preserved
+            // If card already has card_images, keep it, otherwise check for image_url
+            if (!card.card_images && card.image_url) {
+              card = {
+                ...card,
+                card_images: [{
+                  image_url: card.image_url,
+                  image_url_small: card.image_url
+                }]
+              };
+            }
+            
+            return {
+              card_id: card.id,
+              quantity: 1,
+              card: card
+            };
+          })
         : [];
     };
     
