@@ -1,3 +1,12 @@
+/* At the beginning of the file, add the Arsenal accent color to the CSS variables */
+:root {
+  /* ... existing code ... */
+  --arsenal-accent: #9A6324;
+  --arsenal-accent-light: #C08D45;
+  --arsenal-gold: #FFD700;
+  /* ... existing code ... */
+}
+
 /* Reset and base styles */
 * {
   box-sizing: border-box;
@@ -23,7 +32,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
+  
   background-color: #2c3e50;
   color: #fff;
 }
@@ -66,7 +75,7 @@ body {
 /* Main content */
 .main-content {
   flex: 1;
-  padding: 2rem;
+  
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;

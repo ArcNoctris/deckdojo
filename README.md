@@ -1,20 +1,22 @@
 # DeckDojo.app - YuGiOh Game Tracker & Deck Builder
 
-DeckDojo is a web application for YuGiOh players to track their games (Life point/Timer), manage their decks, and access card information. The app includes features like a deck builder, game statistics, and card scanning capabilities.
+DeckDojo is a web application for YuGiOh players to track their games (Life point/Timer), manage their decks, and access card information. The app includes features like a deck builder, game statistics, and card database integration.
 
 ## Features
 
 - **Authentication**: User registration and login
-- **Life Point Tracker**: Track life points during duels
-- **Deck Builder**: Create and manage YuGiOh decks
-- **Game History**: Track duel statistics
-- **Card Scanner** (Coming Soon): Scan cards to check prices using ML
+- **Life Point Tracker**: Track life points during duels with timer functionality
+- **Arsenal**: Your personal deck collection displayed on a custom themed shelf
+- **Deck Builder**: Create and manage YuGiOh decks with an intuitive interface
+- **Game History**: Track duel statistics and results
+- **Card Database**: Access comprehensive card information
+- **Community**: Share decks and connect with other players
 
 ## Tech Stack
 
 - **Frontend**: React.js
-- **Backend**: Firebase (initial), FastAPI Python with PyTorch (future)
-- **Database**: Firebase Firestore
+- **Backend**: MongoDB Services
+- **Database**: MongoDB
 - **Authentication**: Firebase Authentication
 - **Hosting**: Firebase Hosting
 
@@ -24,6 +26,7 @@ DeckDojo is a web application for YuGiOh players to track their games (Life poin
 
 - Node.js and npm
 - Firebase account with a project set up
+- MongoDB database connection
 
 ### Installation
 
@@ -39,9 +42,12 @@ DeckDojo is a web application for YuGiOh players to track their games (Life poin
    ```
 
 3. Configure Firebase:
-   - Update the Firebase configuration in `src/firebase/config.js` with your Firebase project details
+   - Update the Firebase configuration in your environment variables
 
-4. Start the development server:
+4. Configure MongoDB:
+   - Ensure your MongoDB connection string is set in your environment variables
+
+5. Start the development server:
    ```
    npm start
    ```
@@ -52,23 +58,20 @@ DeckDojo is a web application for YuGiOh players to track their games (Life poin
 1. Go to the [Firebase Console](https://console.firebase.google.com/)
 2. Create a new project or select your existing project
 3. Enable Authentication (Email/Password)
-4. Create a Firestore database
-5. Add your app to Firebase (Web app)
-6. Copy the Firebase configuration to your project:
-   - Rename `src/firebase/config.template.js` to `src/firebase/config.js`
-   - Replace the placeholder values with your actual Firebase configuration
+4. Add your app to Firebase (Web app)
+5. Set up your environment variables with Firebase configuration
 
 ## Available Scripts
 
 - `npm start`: Runs the app in development mode
 - `npm test`: Launches the test runner
 - `npm run build`: Builds the app for production
-- `npm run eject`: Ejects the app from Create React App
+- `npm run deploy`: Deploys the app to Firebase hosting
 
-## Future Development
+## Features In Development
 
-- Integration with FastAPI backend for ML-based card scanning
-- Mobile app development using React Native
+- Mobile app support with responsive design
+- Expanded community features
 - Advanced deck statistics and analysis
 
 ## License

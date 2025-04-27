@@ -1,0 +1,34 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# What is the app?
+ This app is a tool for TCG (at the current time Yu-Gi-Oh) players. The name is deckdojo and the main idea is to provide a tool to the players to create decks, track their games, gather news and statistics.
+
+
+
+# Style
+- The whole app should resamble a dojo so it should adhere to dojo like wordings and contian some asian Lore/Mythology
+- The app should be designed in a pixel game art style
+- All tools and areas should have a gamification factor to them
+- The app logo is a Dragon
+- The main colors are:
+--main-blue: #11465d;
+--bright-gold: #fcdd5a;
+- [global.css](mdc:src/styles/global.css)
+- A dark mode should be allways available
+- Each tool e.g. deck builder should be called with a dojo esque name -> Arsenal is the deck builder to "prep your weapons"
+- Each tool should use some tool specific accent color. If no color is specified within the [global.css](mdc:src/styles/global.css), define it there and refence it.
+- The background of each tool should be an pixel art that scales between screen sizes.
+- The app should be created with a mobile first approach, differentiating beween mobile and non mobile screen sizes e.g. when creating a menu. Allways use for that state of the art approaches for mobile web-apps
+
+# Techology and Structure
+- The app is a React web-app
+- A mobile version is thought of but not yet in production
+- general project structure, key functions etc. should be documented within [README.md](mdc:README.md), also use this for reference
+- Update [README.md](mdc:README.md) when something is outdated.
+
+
+
+

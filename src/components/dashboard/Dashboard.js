@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { logoutUser } from '../../services/firebase/firebase';
 
-const Dashboard = () => {
+const deckdojoBg = require('../../assets/images/deckdojo-bg.png'); // We'll add this image
+
+const DeckDojo = () => {
   const { currentUser } = useAuth();
 
   const handleLogout = async () => {
@@ -15,16 +17,28 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="dashboard">
-      <header className="dashboard-header">
-        <h1>DeckDojo Dashboard</h1>
+    <div 
+      className="deckdojo-landing"
+      style={{
+        background: `url(${deckdojoBg}) center center/cover no-repeat fixed`,
+        minHeight: '100vh',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+      }}
+    >
+      <header className="deckdojo-header">
+        <h1>Welcome to DeckDojo</h1>
         <div className="user-info">
           <span>Welcome, {currentUser?.email}</span>
           <button onClick={handleLogout}>Logout</button>
         </div>
       </header>
 
-      <div className="dashboard-content">
+      <div className="deckdojo-content">
         <div className="feature-cards">
           <div className="feature-card">
             <h3>Life Point Tracker</h3>
@@ -33,9 +47,9 @@ const Dashboard = () => {
           </div>
           
           <div className="feature-card">
-            <h3>Deck Builder</h3>
-            <p>Create and manage your YuGiOh decks</p>
-            <Link to="/decks">My Decks</Link>
+            <h3>Arsenal</h3>
+            <p>Manage your YuGiOh decks in your arsenal</p>
+            <Link to="/decks">Go to Arsenal</Link>
           </div>
           
           <div className="feature-card">
@@ -55,4 +69,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default DeckDojo;

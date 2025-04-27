@@ -62,8 +62,7 @@ const Footer = () => {
           <div className="footer-section">
             <h4 className="footer-section-title">Account</h4>
             <ul className="footer-links">
-              <li><Link to="/dashboard">Dashboard</Link></li>
-              <li><Link to="/decks">My Decks</Link></li>
+              <li><Link to="/decks">Arsenal</Link></li>
               <li><Link to="/profile">Profile</Link></li>
               <li><Link to="/settings">Settings</Link></li>
             </ul>

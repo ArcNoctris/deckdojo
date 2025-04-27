@@ -119,16 +119,9 @@ const Navbar = () => {
                   className={`nav-link ${isActive('/decks') ? 'active' : ''}`}
                   style={{ color: theme.colors.text }}
                 >
-                  My Decks
+                  Arsenal
                 </Link>
 
-                <Link 
-                  to="/dashboard" 
-                  className={`nav-link ${isActive('/dashboard') ? 'active' : ''}`}
-                  style={{ color: theme.colors.text }}
-                >
-                  Dashboard
-                </Link>
                 <Link 
                   to="/community" 
                   className={`nav-link ${isActive('/community') ? 'active' : ''}`}

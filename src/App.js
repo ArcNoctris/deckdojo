@@ -8,7 +8,7 @@ import Navbar from './components/navigation/Navbar';
 import Footer from './components/common/Footer';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
-import Dashboard from './components/dashboard/Dashboard';
+import DeckDojo from './components/dashboard/Dashboard';
 import Play from './archive/play/Play';
 import LoadingAnimation from './components/common/LoadingAnimation';
 import DeckWelcome from './components/deck/DeckWelcome';
@@ -45,14 +45,13 @@ function App() {
               <main className="main-content">
                 <Routes>
                   {/* Public routes */}
-                  <Route path="/" element={<Navigate to="/dashboard" />} />
+                  <Route path="/" element={<DeckDojo />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/play" element={<Play />} />
                   
                   {/* Protected routes */}
                   <Route element={<ProtectedRoute />}>
-                    <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/decks" element={<DeckWelcome />} />
                     <Route path="/decks/new" element={
                       <DeckBuilder />

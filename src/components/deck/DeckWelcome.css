@@ -1,27 +1,63 @@
-.deck-welcome-container {
+.arsenal-container {
   padding: 2rem 1rem;
   min-height: calc(100vh - 70px);
   animation: fadeIn 0.5s ease-in-out;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23654321'/%3E%3Cpath d='M0 0h10v100H0zM20 0h5v100h-5zM35 0h15v100H35zM60 0h5v100h-5zM75 0h10v100H75zM95 0h5v100h-5z' fill='%23543210' opacity='0.5'/%3E%3Cpath d='M0 0v10h100V0zM0 20v5h100v-5zM0 35v15h100V35zM0 60v5h100v-5zM0 75v10h100V75zM0 95v5h100v-5z' fill='%23543210' opacity='0.5'/%3E%3C/svg%3E");
+  background-color: #8B4513;
+  position: relative;
 }
 
-.deck-welcome-header {
+/* Add pixel art weapons to the wall */
+.arsenal-container::before {
+  content: "";
+  position: absolute;
+  top: 100px;
+  left: 50px;
+  width: 60px;
+  height: 200px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='200' viewBox='0 0 60 200'%3E%3Cpath d='M30 0v150l-10 20h20l-10-20z' fill='%23CCCCCC'/%3E%3Cpath d='M25 0v150l5 10 5-10V0z' fill='%23999999'/%3E%3Cpath d='M22 10h16v10H22z' fill='%23333333'/%3E%3Cpath d='M20 150h20v10H20z' fill='%23663333'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  opacity: 0.7;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.arsenal-container::after {
+  content: "";
+  position: absolute;
+  top: 150px;
+  right: 80px;
+  width: 180px;
+  height: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='40' viewBox='0 0 180 40'%3E%3Cpath d='M10 20h160v5H10z' fill='%23663333'/%3E%3Cpath d='M20 15h140v5H20zM20 25h140v5H20z' fill='%23996633'/%3E%3Ccircle cx='40' cy='20' r='8' fill='%23CCCCCC'/%3E%3Ccircle cx='140' cy='20' r='8' fill='%23CCCCCC'/%3E%3Cpath d='M0 15l20 5-20 5z' fill='%23663333'/%3E%3Cpath d='M180 15l-20 5 20 5z' fill='%23663333'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  opacity: 0.7;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.arsenal-header {
   text-align: center;
   margin-bottom: 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+  z-index: 2;
 }
 
-.deck-welcome-header h1 {
+.arsenal-header h1 {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
   font-family: 'Press Start 2P', cursive;
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+  color: #FFD700;
 }
 
-.deck-welcome-header p {
+.arsenal-header p {
   font-size: 1.1rem;
   margin-bottom: 1.5rem;
+  color: #EEEEEE;
 }
 
 .create-deck-button {
@@ -33,12 +69,16 @@
   text-decoration: none;
   transition: all 0.3s ease;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  background-color: #9A6324;
+  color: #FFD700;
+  border: 2px solid #FFD700;
 }
 
 .create-deck-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  background-color: #7E5123;
 }
 
 .plus-icon-small {
@@ -47,12 +87,43 @@
   font-weight: bold;
 }
 
-.deck-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 2rem;
+/* Wooden Shelf Styling */
+.wooden-shelf {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
   max-width: 1400px;
   margin: 0 auto 2rem;
+  padding: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Wooden shelf background */
+.wooden-shelf::before {
+  content: "";
+  position: absolute;
+  top: -20px;
+  left: 0;
+  right: 0;
+  height: calc(100% + 40px);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='100' viewBox='0 0 300 100'%3E%3Crect width='300' height='80' fill='%23996633'/%3E%3Crect y='80' width='300' height='20' fill='%23663300'/%3E%3Cpath d='M0 0h300v5H0zM0 20h300v2H0zM0 40h300v2H0zM0 60h300v2H0zM0 80h300v3H0z' fill='%23331100' opacity='0.2'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.wooden-shelf::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='10' viewBox='0 0 20 10'%3E%3Cpath d='M0 0h20v5H0z' fill='%23996633'/%3E%3Cpath d='M0 5h20v5H0z' fill='%23663300'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  z-index: 3;
 }
 
 .deck-link {
@@ -60,33 +131,14 @@
   transition: transform 0.3s ease;
   display: flex;
   justify-content: center;
+  filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.4));
+  transform-style: preserve-3d;
+  perspective: 800px;
 }
 
 .deck-link:hover {
-  transform: translateY(-5px);
-}
-
-.new-deck-box {
-  height: 100%;
-  border-radius: 12px;
-  border: 2px dashed;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.new-deck-box:hover {
-  border-style: solid;
-}
-
-.plus-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  font-weight: bold;
+  transform: translateY(-5px) rotateX(5deg);
+  z-index: 10;
 }
 
 .deck-loading {
@@ -94,14 +146,23 @@
   font-size: 1.2rem;
   padding: 3rem;
   animation: pulse 2s infinite ease-in-out;
+  color: #FFD700;
+  position: relative;
+  z-index: 2;
 }
 
-.no-decks-message {
+.empty-arsenal-message {
   text-align: center;
   padding: 3rem;
   font-size: 1.2rem;
   max-width: 600px;
   margin: 0 auto;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  color: #EEEEEE;
+  border: 2px solid #663300;
+  position: relative;
+  z-index: 2;
 }
 
 /* Pagination styles */
@@ -109,49 +170,77 @@
   display: flex;
   justify-content: center;
   margin: 2rem 0;
+  position: relative;
+  z-index: 2;
 }
 
 .pagination {
   display: flex;
   align-items: center;
   gap: 1rem;
+  background-color: rgba(102, 51, 0, 0.6);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 2px solid #996633;
 }
 
 .pagination button {
   padding: 0.5rem 1rem;
-  border: 1px solid;
+  border: 1px solid #996633;
   border-radius: 4px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  background-color: #7E5123;
+  color: #FFD700;
 }
 
 .pagination button:hover:not(:disabled) {
   opacity: 0.9;
   transform: translateY(-2px);
+  background-color: #9A6324;
 }
 
 .pagination button:disabled {
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .page-info {
   font-size: 0.9rem;
   font-weight: 500;
+  color: #FFD700;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
 }
 
 /* Responsive styles */
 @media (max-width: 768px) {
-  .deck-welcome-header h1 {
+  .arsenal-header h1 {
     font-size: 2rem;
   }
   
-  .deck-grid {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
+  .wooden-shelf {
+    gap: 15px;
+    padding: 10px;
   }
   
   .pagination {
     gap: 0.5rem;
+  }
+
+  .arsenal-container::before,
+  .arsenal-container::after {
+    opacity: 0.3;
   }
 }

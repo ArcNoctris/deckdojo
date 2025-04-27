@@ -47,16 +47,15 @@ const DeckWelcome = () => {
 
   return (
     <div 
-      className="deck-welcome-container"
+      className="arsenal-container"
       style={{ backgroundColor: theme.colors.background }}
     >
-      <div className="deck-welcome-header">
-        <h1 style={{ color: theme.colors.text }}>My Decks</h1>
+      <div className="arsenal-header">
+        <h1 style={{ color: theme.colors.text }}>Arsenal</h1>
         <p style={{ color: theme.colors.textSecondary }}>
-          Create and manage your card decks
+          Your deck collection displayed on a wooden shelf
         </p>
         
-        {console.log('Create deck link URL:', '/decks/new')}
         <Link 
           to="/decks/new" 
           onClick={(e) => {
@@ -71,17 +70,17 @@ const DeckWelcome = () => {
             color: theme.colors.white
           }}
         >
-          <span className="plus-icon-small">+</span> Create New Deck
+          <span className="plus-icon-small">+</span> Add to Arsenal
         </Link>
       </div>
 
       {loading ? (
         <div className="deck-loading" style={{ color: theme.colors.text }}>
-          Loading your decks...
+          Loading your arsenal...
         </div>
       ) : (
         <>
-          <div className="deck-grid">
+          <div className="wooden-shelf">
             {currentDecks.map(deck => (
               <div 
                 key={deck.id}
@@ -132,10 +131,10 @@ const DeckWelcome = () => {
 
       {!loading && decks.length === 0 && (
         <div 
-          className="no-decks-message"
+          className="empty-arsenal-message"
           style={{ color: theme.colors.textSecondary }}
         >
-          <p>You don't have any decks yet. Create your first deck to get started!</p>
+          <p>Your arsenal is empty. Add your first deck to get started!</p>
         </div>
       )}
     </div>
