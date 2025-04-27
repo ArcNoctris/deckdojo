@@ -86,15 +86,8 @@ const DeckWelcome = () => {
               <div 
                 key={deck.id}
                 className="deck-link"
-                onClick={() => handleDeckClick(deck)}
               >
-                <DeckBox 
-                  name={deck.name} 
-                  main={deck.main}
-                  extra={deck.extra}
-                  side={deck.side}
-                  mainColor={deck.mainColor || theme.colors.accent}
-                />
+                <DeckBox deck={deck} />
               </div>
             ))}
           </div>

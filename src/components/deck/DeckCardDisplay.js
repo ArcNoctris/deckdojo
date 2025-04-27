@@ -5,6 +5,24 @@ import './DeckCardDisplay.css';
 const DeckCardDisplay = ({ deck, onCardSelect, onCardRemove }) => {
   const { theme } = useTheme();
   const [selectedCard, setSelectedCard] = useState(null);
+  const [draggedCard, setDraggedCard] = useState(null);
+  const [draggedSection, setDraggedSection] = useState(null);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [localDeck, setLocalDeck] = useState(deck);
+  const [dragOverSection, setDragOverSection] = useState(null);
+  const [dragValidSection, setDragValidSection] = useState(true);
+
+  // Deck limits
+  const DECK_LIMITS = {
+    main: 60,
+    extra: 15,
+    side: 15
+  };
+
+  // Update local deck when prop changes
+  useEffect(() => {
+    setLocalDeck(deck);
+  }, [deck]);
 
   // Debug logging
   useEffect(() => {
@@ -58,6 +76,159 @@ const DeckCardDisplay = ({ deck, onCardSelect, onCardRemove }) => {
     if (card.race) stats.push(card.race);
 
     return stats.join(' ');
+  };
+
+  const handleDragStart = (e, card, section, index) => {
+    setDraggedCard(card);
+    setDraggedSection(section);
+    
+    // Store the card data in the drag event
+    e.dataTransfer.setData('text/plain', JSON.stringify({
+      cardId: card.id,
+      section,
+      sourceIndex: index
+    }));
+    
+    // Set the drag effect to move
+    e.dataTransfer.effectAllowed = 'move';
+    
+    // Add a class to the element being dragged
+    e.target.classList.add('dragging');
+  };
+  
+  const handleDragOver = (e, section, index) => {
+    e.preventDefault();
+    
+    // Allow drops from any section to side deck, or from side deck to appropriate section
+    if (section === draggedSection || 
+        section === 'side' || 
+        (draggedSection === 'side' && canCardGoInSection(draggedCard, section))) {
+      e.dataTransfer.dropEffect = 'move';
+      setHoveredIndex(index);
+    } else {
+      e.dataTransfer.dropEffect = 'none';
+    }
+  };
+  
+  // Check if a card can go into a specific section based on card type
+  const canCardGoInSection = (card, section) => {
+    if (!card || !section) return false;
+    
+    // Extra deck types
+    const extraDeckTypes = [
+      'Fusion Monster', 
+      'Synchro Monster', 
+      'XYZ Monster', 
+      'Link Monster'
+    ];
+    
+    // If target is extra deck, only extra deck cards can go there
+    if (section === 'extra') {
+      return card.type && extraDeckTypes.some(type => card.type.includes(type));
+    }
+    
+    // If target is main deck, only non-extra deck cards can go there
+    if (section === 'main') {
+      return !card.type || !extraDeckTypes.some(type => card.type.includes(type));
+    }
+    
+    // Side deck can have any card
+    return true;
+  };
+  
+  const handleDragEnd = (e) => {
+    e.target.classList.remove('dragging');
+    setDraggedCard(null);
+    setDraggedSection(null);
+    setHoveredIndex(null);
+  };
+  
+  const handleDrop = (e, section, targetIndex) => {
+    e.preventDefault();
+    
+    try {
+      // Get the dragged card data
+      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+      const { cardId, section: sourceSection, sourceIndex } = data;
+      
+      // Create a copy of the entire deck
+      const newDeck = { ...localDeck };
+      
+      // Don't do anything if dropping on the same spot
+      if (sourceSection === section && sourceIndex === targetIndex) return;
+      
+      // Get the relevant deck sections
+      const sourceCards = [...newDeck[sourceSection]];
+      const targetCards = sourceSection === section ? sourceCards : [...newDeck[section]];
+      
+      // Find the card by ID and index
+      const cardToMove = sourceCards[sourceIndex];
+      
+      if (!cardToMove || cardToMove.id !== cardId) {
+        console.error("Card mismatch:", cardToMove, cardId);
+        return;
+      }
+      
+      // For cross-section moves, check if card can go in the target section
+      if (sourceSection !== section && !canCardGoInSection(cardToMove, section)) {
+        console.log(`Card ${cardToMove.name} cannot go in ${section} deck`);
+        return;
+      }
+      
+      // Remove the card from its original position
+      sourceCards.splice(sourceIndex, 1);
+      
+      // If moving to another section, just add to the end
+      if (sourceSection !== section) {
+        targetCards.push(cardToMove);
+      } else {
+        // Insert at the new position within the same section
+        const insertIndex = targetIndex > sourceIndex ? targetIndex - 1 : targetIndex;
+        targetCards.splice(insertIndex, 0, cardToMove);
+      }
+      
+      // Update the deck with the modified sections
+      newDeck[sourceSection] = sourceCards;
+      if (sourceSection !== section) {
+        newDeck[section] = targetCards;
+      }
+      
+      // Update local state
+      setLocalDeck(newDeck);
+      
+      // Propagate changes to parent component
+      if (onCardSelect) {
+        // Tell the parent that the deck structure changed
+        onCardSelect({ type: 'reorder', from: sourceSection, to: section }, 'reorder');
+      }
+    } catch (error) {
+      console.error('Error during drag and drop:', error);
+    }
+    
+    // Reset drag state
+    setDraggedCard(null);
+    setDraggedSection(null);
+    setHoveredIndex(null);
+  };
+
+  // Handle section drag over
+  const handleSectionDragOver = (e, section) => {
+    e.preventDefault();
+    setDragOverSection(section);
+    
+    // Check if the dragged card can go in this section
+    if (draggedCard && draggedSection) {
+      const canMove = draggedSection === section || 
+                      section === 'side' || 
+                      (draggedSection === 'side' && canCardGoInSection(draggedCard, section));
+      setDragValidSection(canMove);
+    }
+  };
+  
+  // Handle section drag leave
+  const handleSectionDragLeave = () => {
+    setDragOverSection(null);
+    setDragValidSection(true);
   };
 
   const renderCardDetail = (card) => {
@@ -130,21 +301,52 @@ const DeckCardDisplay = ({ deck, onCardSelect, onCardRemove }) => {
       card && typeof card === 'object' && Object.keys(card).length > 0
     );
     
-    console.log(`Filtered ${title} cards:`, filteredCards);
+    // Deck limit information
+    const cardCount = filteredCards.length;
+    const maxCards = DECK_LIMITS[section];
+    const isFull = cardCount >= maxCards;
+    const isNearFull = cardCount >= maxCards * 0.8;
+    
+    // Section class based on drag state
+    const sectionClass = dragOverSection === section 
+      ? (dragValidSection ? 'can-drop' : 'no-drop')
+      : '';
     
     return (
-      <div className="deck-section">
-        <h3 style={{ color: theme.colors.text }}>{title} ({filteredCards.length})</h3>
+      <div 
+        className={`deck-section ${sectionClass}`}
+        onDragOver={(e) => handleSectionDragOver(e, section)}
+        onDragLeave={handleSectionDragLeave}
+        onDrop={(e) => handleDrop(e, section, filteredCards.length)} // Drop at the end
+      >
+        <div className="deck-section-header">
+          <h3 style={{ color: theme.colors.text }}>{title}</h3>
+          <div 
+            className={`deck-limit-indicator ${isFull ? 'full' : isNearFull ? 'near-full' : ''}`}
+            style={{ 
+              borderColor: theme.colors.border,
+              color: isFull || isNearFull ? '#ffffff' : theme.colors.text
+            }}
+          >
+            {cardCount} / {maxCards}
+          </div>
+        </div>
+        
         <div className="card-grid">
           {filteredCards.map((card, index) => (
             <div
-              key={card.id || `${section}-card-${index}`}
-              className="card-item"
+              key={`${card.id}-${section}-${index}`}
+              className={`card-item ${hoveredIndex === index && draggedSection === section ? 'drag-over' : ''}`}
               onClick={() => setSelectedCard(card)}
               style={{
                 backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border
               }}
+              draggable="true"
+              onDragStart={(e) => handleDragStart(e, card, section, index)}
+              onDragEnd={handleDragEnd}
+              onDragOver={(e) => handleDragOver(e, section, index)}
+              onDrop={(e) => handleDrop(e, section, index)}
             >
               {getCardImage(card) ? (
                 <div className="card-image-container">
@@ -194,14 +396,14 @@ const DeckCardDisplay = ({ deck, onCardSelect, onCardRemove }) => {
 
   // Ensure deck object has all required properties and filter out empty objects
   const deckData = {
-    main: Array.isArray(deck.main) 
-      ? deck.main.filter(card => card && typeof card === 'object' && Object.keys(card).length > 0) 
+    main: Array.isArray(localDeck.main) 
+      ? localDeck.main.filter(card => card && typeof card === 'object' && Object.keys(card).length > 0) 
       : [],
-    extra: Array.isArray(deck.extra) 
-      ? deck.extra.filter(card => card && typeof card === 'object' && Object.keys(card).length > 0) 
+    extra: Array.isArray(localDeck.extra) 
+      ? localDeck.extra.filter(card => card && typeof card === 'object' && Object.keys(card).length > 0) 
       : [],
-    side: Array.isArray(deck.side) 
-      ? deck.side.filter(card => card && typeof card === 'object' && Object.keys(card).length > 0) 
+    side: Array.isArray(localDeck.side) 
+      ? localDeck.side.filter(card => card && typeof card === 'object' && Object.keys(card).length > 0) 
       : []
   };
 

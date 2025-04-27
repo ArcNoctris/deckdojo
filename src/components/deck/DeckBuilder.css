@@ -1,80 +1,52 @@
 .deck-builder-container {
-  padding: 1rem;
-  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
 }
 
 .deck-builder-header {
-  margin-bottom: 2rem;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .deck-settings {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
-  padding: 1rem;
-  background-color: var(--surface-color);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.deck-name-color {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  min-width: 300px;
-}
-
-.deck-stats {
-  display: flex;
-  gap: 2rem;
-  align-items: center;
-}
-
-.stat-item {
-  display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.stat-item span:first-child {
-  font-size: 0.8rem;
-  opacity: 0.8;
-}
-
-.stat-item span:last-child {
-  font-weight: bold;
-  font-size: 1.2rem;
-}
-
-.deck-actions {
-  display: flex;
   gap: 1rem;
 }
 
-.deck-builder-main {
-  height: calc(100vh - 200px);
-}
-
-.deck-builder-grid {
+.deck-name-color {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  height: 100%;
-  overflow: hidden;
+  grid-template-columns: 1fr;
+  gap: 1rem;
 }
 
-.card-search-section {
-  overflow-y: auto;
-  padding-right: 1rem;
+@media (min-width: 768px) {
+  .deck-name-color {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.card-display-panel {
-  overflow-y: auto;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+@media (min-width: 1200px) {
+  .deck-name-color {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .deck-settings {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  
+  .deck-stats {
+    margin-left: 2rem;
+    min-width: 150px;
+  }
+  
+  .deck-actions {
+    margin-left: auto;
+  }
 }
 
 .form-group {
@@ -84,26 +56,43 @@
 }
 
 .form-group label {
-  font-size: 0.9rem;
-  opacity: 0.8;
+  font-weight: bold;
 }
 
-.form-group input[type="text"] {
-  width: 200px;
+.form-group input {
   padding: 0.5rem;
-  border: 1px solid;
   border-radius: 4px;
+  border: 1px solid;
+  font-size: 1rem;
+}
+
+.deck-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem 2rem;
+  padding: 1rem 0;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.deck-actions {
+  display: flex;
+  gap: 1rem;
+  padding-top: 1rem;
 }
 
 .back-button,
 .save-button {
-  padding: 0.5rem 1rem;
-  border: none;
+  padding: 0.75rem 1.5rem;
   border-radius: 4px;
-  font-size: 0.9rem;
   font-weight: bold;
+  border: 1px solid;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .back-button:hover,
@@ -112,25 +101,67 @@
 }
 
 .error-message {
+  margin: 1rem;
   padding: 1rem;
   border-radius: 4px;
-  margin: 1rem 0;
-}
-
-.coming-soon-message {
   text-align: center;
-  padding: 2rem;
-  font-size: 1.2rem;
-  font-style: italic;
+  font-weight: bold;
 }
 
-.deck-builder-loading {
+.deck-builder-main {
+  flex: 1;
+  overflow: hidden;
+  padding: 1rem;
+}
+
+.deck-builder-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  height: 100%;
+}
+
+@media (min-width: 992px) {
+  .deck-builder-grid {
+    grid-template-columns: 350px 1fr;
+  }
+}
+
+.card-search-section {
+  overflow-y: auto;
+  max-height: 70vh;
+  border-radius: 8px;
+}
+
+.card-display-panel {
+  overflow-y: auto;
+  max-height: 70vh;
+  border-radius: 8px;
+  border: 1px solid;
+}
+
+/* Sort controls */
+.sort-controls {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: calc(100vh - 70px);
-  font-size: 1.5rem;
-  animation: pulse 2s infinite ease-in-out;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .sort-controls {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .sort-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+.sort-dropdown {
+  flex: 1;
+  min-width: 200px;
 }
 
 /* Custom scrollbar */

@@ -1,17 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useToast } from '../../contexts/ToastContext';
 import { getDeckById, createDeck, updateDeck } from '../../services/deckService';
 import './DeckBuilder.css';
 import DeckCardDisplay from './DeckCardDisplay';
 import CardSearch from './CardSearch';
+
+// Define deck size limits
+const DECK_LIMITS = {
+  main: 60,
+  extra: 15,
+  side: 15,
+  cardCopies: 3
+};
+
+const SORT_OPTIONS = [
+  { label: 'Name (A-Z)', value: 'name-asc' },
+  { label: 'Name (Z-A)', value: 'name-desc' },
+  { label: 'Level/Rank (High-Low)', value: 'level-desc' },
+  { label: 'Level/Rank (Low-High)', value: 'level-asc' },
+  { label: 'ATK (High-Low)', value: 'atk-desc' },
+  { label: 'ATK (Low-High)', value: 'atk-asc' },
+  { label: 'Type', value: 'type' }
+];
 
 const DeckBuilder = () => {
   const { deckId } = useParams();
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { currentUser } = useAuth();
+  const { showToast } = useToast();
+  const lastAddedCardRef = useRef(null);
   
   console.log('DeckBuilder mounted with deckId:', deckId);
   
@@ -31,6 +52,7 @@ const DeckBuilder = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [sortOption, setSortOption] = useState('name-asc');
   
   // Fix for isNewDeck check
   const isNewDeck = deckId === 'new' || !deckId;
@@ -121,18 +143,86 @@ const DeckBuilder = () => {
     }));
   };
 
+  // Helper to count occurrences of a card in a deck section
+  const countCardCopies = (cardId, section) => {
+    if (!Array.isArray(deck[section])) return 0;
+    return deck[section].filter(card => card.id === cardId).length;
+  };
+
+  // Count total copies of a card across all sections
+  const countTotalCardCopies = (cardId) => {
+    return countCardCopies(cardId, 'main') + 
+           countCardCopies(cardId, 'extra') + 
+           countCardCopies(cardId, 'side');
+  };
+
   const handleCardSelect = (card, section) => {
     if (!card || !section) return;
     
+    // Special case for reordering (from drag and drop)
+    if (card.type === 'reorder') {
+      // Handle cross-section drag and drop reordering
+      if (card.from && card.to && card.from !== card.to) {
+        // The DeckCardDisplay component has already updated its local state
+        // We just need to sync that with our deck state
+        setDeck(prev => ({
+          ...prev,
+          updatedAt: new Date()
+        }));
+      }
+      return;
+    }
+    
+    // Store the card reference for potential animation
+    lastAddedCardRef.current = card;
+    
+    // Determine the initial section based on card type
+    const initialSection = section;
+    let targetSection = section;
+    
+    // Check if we've reached the maximum number of copies for this card
+    const totalCopies = countTotalCardCopies(card.id);
+    if (totalCopies >= DECK_LIMITS.cardCopies) {
+      showToast(`Maximum ${DECK_LIMITS.cardCopies} copies of "${card.name}" allowed`, 'warning');
+      document.querySelector('.card-search-section').classList.add('shake');
+      setTimeout(() => {
+        document.querySelector('.card-search-section').classList.remove('shake');
+      }, 500);
+      return;
+    }
+    
+    // Check if initial section is full
+    if (Array.isArray(deck[initialSection]) && deck[initialSection].length >= DECK_LIMITS[initialSection]) {
+      // If main/extra is full, try putting in side deck
+      if (initialSection !== 'side' && Array.isArray(deck.side) && deck.side.length < DECK_LIMITS.side) {
+        targetSection = 'side';
+        showToast(`${initialSection.charAt(0).toUpperCase() + initialSection.slice(1)} deck is full, adding to side deck`, 'info');
+      } else {
+        // All decks are full
+        showToast(`${initialSection.charAt(0).toUpperCase() + initialSection.slice(1)} deck is limited to ${DECK_LIMITS[initialSection]} cards`, 'warning');
+        document.querySelector('.card-search-section').classList.add('shake');
+        setTimeout(() => {
+          document.querySelector('.card-search-section').classList.remove('shake');
+        }, 500);
+        return;
+      }
+    }
+    
     setDeck(prev => {
-      const newSection = Array.isArray(prev[section]) ? [...prev[section]] : [];
+      const newSection = Array.isArray(prev[targetSection]) ? [...prev[targetSection]] : [];
       newSection.push(card);
       return {
         ...prev,
-        [section]: newSection,
+        [targetSection]: newSection,
         updatedAt: new Date()
       };
     });
+    
+    // Show success toast
+    const copiesAfterAdd = countTotalCardCopies(card.id) + 1;
+    if (copiesAfterAdd === DECK_LIMITS.cardCopies) {
+      showToast(`Added maximum ${DECK_LIMITS.cardCopies} copies of "${card.name}"`, 'info');
+    }
   };
 
   const handleCardRemove = (card, section) => {
@@ -148,6 +238,56 @@ const DeckBuilder = () => {
         updatedAt: new Date()
       };
     });
+  };
+
+  // Sort the cards based on selected option
+  const sortCards = (section) => {
+    if (!Array.isArray(deck[section]) || deck[section].length === 0) return;
+    
+    setDeck(prev => {
+      const sortedCards = [...prev[section]];
+      
+      // Apply sorting based on the selected option
+      switch (sortOption) {
+        case 'name-asc':
+          sortedCards.sort((a, b) => a.name?.localeCompare(b.name));
+          break;
+        case 'name-desc':
+          sortedCards.sort((a, b) => b.name?.localeCompare(a.name));
+          break;
+        case 'level-desc':
+          sortedCards.sort((a, b) => (b.level || b.rank || 0) - (a.level || a.rank || 0));
+          break;
+        case 'level-asc':
+          sortedCards.sort((a, b) => (a.level || a.rank || 0) - (b.level || b.rank || 0));
+          break;
+        case 'atk-desc':
+          sortedCards.sort((a, b) => (b.atk || 0) - (a.atk || 0));
+          break;
+        case 'atk-asc':
+          sortedCards.sort((a, b) => (a.atk || 0) - (b.atk || 0));
+          break;
+        case 'type':
+          sortedCards.sort((a, b) => a.type?.localeCompare(b.type));
+          break;
+        default:
+          break;
+      }
+      
+      return {
+        ...prev,
+        [section]: sortedCards,
+        updatedAt: new Date()
+      };
+    });
+    
+    showToast(`Sorted ${section} deck by ${getSortLabel(sortOption)}`, 'success');
+  };
+  
+  // Get readable label for sort option
+  const getSortLabel = (value) => {
+    const option = SORT_OPTIONS.find(opt => opt.value === value);
+    return option ? option.label : '';
   };
 
   const saveDeck = async () => {
@@ -199,6 +339,7 @@ const DeckBuilder = () => {
         console.log('Creating new deck');
         deckData.createdAt = new Date();
         const newDeckId = await createDeck(deckData);
+        showToast('Deck created successfully!', 'success');
         navigate(`/decks/${newDeckId}`);
       } else {
         // Only update if we're certain we have a valid existing deck ID
@@ -208,11 +349,13 @@ const DeckBuilder = () => {
         }
         console.log('Updating deck with ID:', deckId);
         await updateDeck(deckId.toString(), deckData);
+        showToast('Deck updated successfully!', 'success');
         setError(null);
       }
     } catch (error) {
       console.error('Error saving deck:', error);
       setError('Failed to save deck. Please try again.');
+      showToast('Failed to save deck', 'error');
     } finally {
       setSaving(false);
     }
@@ -284,20 +427,92 @@ const DeckBuilder = () => {
                 />
               </div>
             </div>
+            
+            <div className="form-group">
+              <label htmlFor="sortOption" style={{ color: theme.colors.text }}>Sort Cards</label>
+              <div className="sort-controls">
+                <select
+                  id="sortOption"
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value)}
+                  className="sort-dropdown"
+                  style={{ 
+                    backgroundColor: theme.colors.cardBackground,
+                    color: theme.colors.text,
+                    borderColor: theme.colors.border,
+                    padding: '5px',
+                    borderRadius: '4px'
+                  }}
+                >
+                  {SORT_OPTIONS.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="sort-buttons">
+                  <button 
+                    onClick={() => sortCards('main')}
+                    style={{ 
+                      backgroundColor: theme.colors.primary,
+                      color: theme.colors.white,
+                      border: 'none',
+                      padding: '5px 10px',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Main
+                  </button>
+                  <button 
+                    onClick={() => sortCards('extra')}
+                    style={{ 
+                      backgroundColor: theme.colors.primary,
+                      color: theme.colors.white,
+                      border: 'none',
+                      padding: '5px 10px',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Extra
+                  </button>
+                  <button 
+                    onClick={() => sortCards('side')}
+                    style={{ 
+                      backgroundColor: theme.colors.primary,
+                      color: theme.colors.white,
+                      border: 'none',
+                      padding: '5px 10px',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Side
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="deck-stats">
             <div className="stat-item">
               <span style={{ color: theme.colors.textSecondary }}>Main Deck</span>
-              <span style={{ color: theme.colors.text }}>{Array.isArray(deck.main) ? deck.main.length : 0}</span>
+              <span style={{ color: theme.colors.text }}>
+                {Array.isArray(deck.main) ? deck.main.length : 0}/{DECK_LIMITS.main}
+              </span>
             </div>
             <div className="stat-item">
               <span style={{ color: theme.colors.textSecondary }}>Extra Deck</span>
-              <span style={{ color: theme.colors.text }}>{Array.isArray(deck.extra) ? deck.extra.length : 0}</span>
+              <span style={{ color: theme.colors.text }}>
+                {Array.isArray(deck.extra) ? deck.extra.length : 0}/{DECK_LIMITS.extra}
+              </span>
             </div>
             <div className="stat-item">
               <span style={{ color: theme.colors.textSecondary }}>Side Deck</span>
-              <span style={{ color: theme.colors.text }}>{Array.isArray(deck.side) ? deck.side.length : 0}</span>
+              <span style={{ color: theme.colors.text }}>
+                {Array.isArray(deck.side) ? deck.side.length : 0}/{DECK_LIMITS.side}
+              </span>
             </div>
             <div className="stat-item">
               <span style={{ color: theme.colors.textSecondary }}>Total</span>

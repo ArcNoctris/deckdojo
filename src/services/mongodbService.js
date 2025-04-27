@@ -2,8 +2,8 @@
 // This service uses real API for cards and deck operations
 
 // API base URL for the real MongoDB API
-const API_BASE_URL = 'https://web-production-d4ebf.up.railway.app';
-
+//const API_BASE_URL = 'https://web-production-d4ebf.up.railway.app';
+const API_BASE_URL = 'http://localhost:1111';
 // Sample card data for development
 const MOCK_CARDS = [
   {
@@ -82,29 +82,53 @@ const validateCard = (card, source = 'unknown') => {
 };
 
 // Card Operations - Now using real API
-export const searchCards = async (searchTerm, filters = {}) => {
+export const searchCards = async (searchTerm, filters = {}, page = 1, pageSize = 20) => {
   try {
     console.log("[mongodbService] Searching cards with term:", searchTerm, "and filters:", filters);
     
-    // Build query parameters
+    // Build query parameters for the /cards/search endpoint
     const params = new URLSearchParams();
-    if (searchTerm) params.append('fname', searchTerm); // Using fname for card name search
-
-    // Map frontend filters to API parameters
+    
+    // Map search term and frontend filters to API parameters
+    if (searchTerm) params.append('name', searchTerm);
     if (filters.type) params.append('type', filters.type);
+    if (filters.race) params.append('race', filters.race);
     if (filters.attribute) params.append('attribute', filters.attribute);
-    if (filters.minLevel) params.append('level', filters.minLevel); // API doesn't support range, using min for now
-    if (filters.minATK) params.append('atk', filters.minATK); // API doesn't support range, using min for now
-    if (filters.minDEF) params.append('def', filters.minDEF); // API doesn't support range, using min for now
-    console.log('params');
-    console.log(`${API_BASE_URL}/cards?${params.toString()}`);
+    
+    // Handle level, ensuring it's within the API's acceptable range (1-12)
+    if (filters.level) {
+      const level = parseInt(filters.level);
+      if (!isNaN(level) && level >= 1 && level <= 12) {
+        params.append('level', level);
+      }
+    } else if (filters.minLevel && filters.maxLevel) {
+      // If a range is provided, use the average for simplicity
+      // In a more advanced implementation, we could make multiple calls and merge results
+      const minLevel = parseInt(filters.minLevel);
+      const maxLevel = parseInt(filters.maxLevel);
+      if (!isNaN(minLevel) && !isNaN(maxLevel)) {
+        const avgLevel = Math.round((minLevel + maxLevel) / 2);
+        if (avgLevel >= 1 && avgLevel <= 12) {
+          params.append('level', avgLevel);
+        }
+      }
+    } else if (filters.minLevel) {
+      const level = parseInt(filters.minLevel);
+      if (!isNaN(level) && level >= 1 && level <= 12) {
+        params.append('level', level);
+      }
+    }
+    
+    if (filters.archetype) params.append('archetype', filters.archetype);
+    
+    // Add pagination parameters
+    params.append('page', page);
+    params.append('page_size', pageSize);
+    
+    console.log(`[mongodbService] Search URL: ${API_BASE_URL}/cards/search?${params.toString()}`);
 
-    
-    // Make the API request
-    const response = await fetch(`${API_BASE_URL}/cards?${params.toString()}`);
-    console.log(response);
-    //response.json().then(data => console.log(data));
-    
+    // Make the API request to the search endpoint
+    const response = await fetch(`${API_BASE_URL}/cards/search?${params.toString()}`);
     
     if (!response.ok) {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
@@ -112,17 +136,53 @@ export const searchCards = async (searchTerm, filters = {}) => {
     
     const data = await response.json();
     
-    console.log(`[mongodbService] Search returned ${data.cards.length} cards`);
-    
-    // Transform data if needed to match expected format and validate
-    const validCards = Array.isArray(data.cards) 
-      ? data.cards.filter(card => validateCard(card, 'searchCards'))
-      : [];
-    
-    return validCards;
+    // Check the response structure
+    if (data && data.cards && Array.isArray(data.cards)) {
+      console.log(`[mongodbService] Search returned ${data.cards.length} cards`);
+      
+      // Transform data if needed to match expected format and validate
+      const validCards = data.cards.filter(card => validateCard(card, 'searchCards'));
+      
+      return {
+        cards: validCards,
+        total: data.total || validCards.length,
+        page: data.page || page,
+        pageSize: data.page_size || pageSize,
+        totalPages: data.total_pages || Math.ceil((data.total || validCards.length) / pageSize)
+      };
+    } else if (Array.isArray(data)) {
+      // Fallback for API that returns an array directly
+      console.log(`[mongodbService] Search returned ${data.length} cards (array format)`);
+      
+      const validCards = data.filter(card => validateCard(card, 'searchCards'));
+      
+      return {
+        cards: validCards,
+        total: validCards.length,
+        page: page,
+        pageSize: pageSize,
+        totalPages: Math.ceil(validCards.length / pageSize)
+      };
+    } else {
+      console.error('[mongodbService] Unexpected response format:', data);
+      return {
+        cards: [],
+        total: 0,
+        page: page,
+        pageSize: pageSize,
+        totalPages: 0
+      };
+    }
   } catch (error) {
     console.error('[mongodbService] Error searching cards:', error);
-    return [];
+    return {
+      cards: [],
+      total: 0,
+      page: page,
+      pageSize: pageSize,
+      totalPages: 0,
+      error: error.message
+    };
   }
 };
 
@@ -237,21 +297,20 @@ export const createDeck = async (deckData) => {
       return Array.isArray(cards) 
         ? cards.map(card => {
             // Ensure card image data is preserved
-            // If card already has card_images, keep it, otherwise check for image_url
-            if (!card.card_images && card.image_url) {
-              card = {
-                ...card,
-                card_images: [{
-                  image_url: card.image_url,
-                  image_url_small: card.image_url
-                }]
-              };
+            let cardWithImages = {...card};
+            
+            // Handle different image data formats
+            if (!cardWithImages.card_images && cardWithImages.image_url) {
+              cardWithImages.card_images = [{
+                image_url: cardWithImages.image_url,
+                image_url_small: cardWithImages.image_url
+              }];
             }
             
             return {
-              card_id: card.id,
+              card_id: cardWithImages.id,
               quantity: 1,
-              card: card
+              card: cardWithImages
             };
           })
         : [];
@@ -379,21 +438,20 @@ export const updateDeck = async (deckId, deckData) => {
       return Array.isArray(cards) 
         ? cards.map(card => {
             // Ensure card image data is preserved
-            // If card already has card_images, keep it, otherwise check for image_url
-            if (!card.card_images && card.image_url) {
-              card = {
-                ...card,
-                card_images: [{
-                  image_url: card.image_url,
-                  image_url_small: card.image_url
-                }]
-              };
+            let cardWithImages = {...card};
+            
+            // Handle different image data formats
+            if (!cardWithImages.card_images && cardWithImages.image_url) {
+              cardWithImages.card_images = [{
+                image_url: cardWithImages.image_url,
+                image_url_small: cardWithImages.image_url
+              }];
             }
             
             return {
-              card_id: card.id,
+              card_id: cardWithImages.id,
               quantity: 1,
-              card: card
+              card: cardWithImages
             };
           })
         : [];
@@ -404,6 +462,8 @@ export const updateDeck = async (deckId, deckData) => {
     
     // Prepare the update payload
     const updatePayload = {
+      // Include the ID in the payload as required by the API
+      id: formattedDeckId,
       name: deckData.name || existingDeck.name,
       description: deckData.description || existingDeck.description || '',
       is_public: deckData.visibility === 'public' || existingDeck.is_public || false,
