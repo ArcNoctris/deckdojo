@@ -5,6 +5,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { db } from '../../services/firebase/firebase';
 import { doc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { QRCodeSVG } from 'qrcode.react';
+import PageBackground from '../common/PageBackground';
+import { pageBackgrounds } from '../../assets/images/page-backgrounds';
 import './Duel.css';
 
 const INITIAL_LIFE_POINTS = 8000;
@@ -471,45 +473,51 @@ const Duel = () => {
 
   if (loading) {
     return (
-      <div className="duel-container" style={{ backgroundColor: theme.colors.background }}>
-        <div className="loading-message">Loading duel session...</div>
-      </div>
+      <PageBackground backgroundImage={pageBackgrounds.duel}>
+        <div className="duel-container">
+          <div className="loading-message">Loading duel session...</div>
+        </div>
+      </PageBackground>
     );
   }
 
   if (error) {
     return (
-      <div className="duel-container" style={{ backgroundColor: theme.colors.background }}>
-        <div className="error-message">{error}</div>
-        <button 
-          className="back-button"
-          onClick={() => navigate('/duel')}
-          style={{
-            backgroundColor: theme.colors.primary,
-            color: theme.colors.text
-          }}
-        >
-          Back to Duel Lobby
-        </button>
-      </div>
+      <PageBackground backgroundImage={pageBackgrounds.duel}>
+        <div className="duel-container">
+          <div className="error-message">{error}</div>
+          <button 
+            className="back-button"
+            onClick={() => navigate('/duel')}
+            style={{
+              backgroundColor: theme.colors.primary,
+              color: theme.colors.text
+            }}
+          >
+            Back to Duel Lobby
+          </button>
+        </div>
+      </PageBackground>
     );
   }
 
   if (!duelSession) {
     return (
-      <div className="duel-container" style={{ backgroundColor: theme.colors.background }}>
-        <div className="error-message">Duel session not found</div>
-        <button 
-          className="back-button"
-          onClick={() => navigate('/duel')}
-          style={{
-            backgroundColor: theme.colors.primary,
-            color: theme.colors.text
-          }}
-        >
-          Back to Duel Lobby
-        </button>
-      </div>
+      <PageBackground backgroundImage={pageBackgrounds.duel}>
+        <div className="duel-container">
+          <div className="error-message">Duel session not found</div>
+          <button 
+            className="back-button"
+            onClick={() => navigate('/duel')}
+            style={{
+              backgroundColor: theme.colors.primary,
+              color: theme.colors.text
+            }}
+          >
+            Back to Duel Lobby
+          </button>
+        </div>
+      </PageBackground>
     );
   }
 
@@ -524,376 +532,380 @@ const Duel = () => {
 
   if (!isPlayer1 && !isPlayer2) {
     return (
-      <div className="duel-container" style={{ backgroundColor: theme.colors.background }}>
-        <div className="error-message">You are not part of this duel</div>
-        <button 
-          className="back-button"
-          onClick={() => navigate('/duel')}
-          style={{
-            backgroundColor: theme.colors.primary,
-            color: theme.colors.text
-          }}
-        >
-          Back to Duel Lobby
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="duel-container" style={{ backgroundColor: theme.colors.background }}>
-      {/* Duel Winner Notification */}
-      {showDuelWinner && (
-        <div className="duel-winner-notification" style={{ backgroundColor: theme.colors.success }}>
-          <div className="duel-winner-text">
-            {duelWinnerName} won duel #{currentDuel - (currentDuel > 1 ? 1 : 0)}!
-          </div>
-        </div>
-      )}
-
-      <div className="duel-header">
-        <div className="duel-info">
-          <h2 style={{ color: theme.colors.text }}>Duel Session</h2>
-          <div className="match-info" style={{ color: theme.colors.textSecondary }}>
-            <span>Match: {player1Score} - {player2Score}</span>
-            <span>Current Duel: {currentDuel}</span>
-            {matchPaused && <span className="paused-indicator">PAUSED</span>}
-          </div>
-        </div>
-        <div className="game-timer" style={{ color: theme.colors.primary }}>
-          Time: {formatTime(timeRemaining)}
-        </div>
-      </div>
-
-      <div className="players-area">
-        <div className="player-card" style={{ backgroundColor: theme.colors.cardBackground }}>
-          <div className="player-header">
-            <div className="player-name" style={{ color: theme.colors.text }}>
-              {duelSession.player1Name}
-              {duelSession.isGuestHost && <span style={{ fontStyle: 'italic' }}> (Guest)</span>}
-            </div>
-            <div className="player-score" style={{ color: theme.colors.primary }}>
-              Score: {player1Score}
-            </div>
-          </div>
-          
-          <div className="life-points-display">
-            <div className="life-points-value" style={{ color: theme.colors.text }}>
-              {player1LifePoints} LP
-            </div>
-            <div className="life-points-bar-container">
-              <div 
-                className="life-points-bar"
-                style={{ 
-                  width: `${Math.min(player1LifePoints / INITIAL_LIFE_POINTS * 100, 100)}%`,
-                  backgroundColor: getLifePointsColor(player1LifePoints)
-                }}
-              ></div>
-              {player1LifePoints > INITIAL_LIFE_POINTS && (
-                <div 
-                  className="life-points-bar extra"
-                  style={{ 
-                    width: `${Math.min((player1LifePoints - INITIAL_LIFE_POINTS) / INITIAL_LIFE_POINTS * 100, 100)}%`,
-                    backgroundColor: getLifePointsColor(player1LifePoints)
-                  }}
-                ></div>
-              )}
-            </div>
-          </div>
-          
-          {gameStarted && !matchOver && !matchPaused && (
-            <div className="life-point-controls">
-              <button 
-                onClick={() => updateLifePoints(1, -100)}
-                style={{ backgroundColor: theme.colors.error }}
-              >
-                -100
-              </button>
-              <button 
-                onClick={() => updateLifePoints(1, -500)}
-                style={{ backgroundColor: theme.colors.error }}
-              >
-                -500
-              </button>
-              <button 
-                onClick={() => updateLifePoints(1, -1000)}
-                style={{ backgroundColor: theme.colors.error }}
-              >
-                -1000
-              </button>
-              <button 
-                onClick={() => updateLifePoints(1, 100)}
-                style={{ backgroundColor: theme.colors.success }}
-              >
-                +100
-              </button>
-              <button 
-                onClick={() => updateLifePoints(1, 500)}
-                style={{ backgroundColor: theme.colors.success }}
-              >
-                +500
-              </button>
-              <button 
-                onClick={() => updateLifePoints(1, 1000)}
-                style={{ backgroundColor: theme.colors.success }}
-              >
-                +1000
-              </button>
-              <button
-                onClick={() => openCalculator(1)}
-                style={{ 
-                  backgroundColor: theme.colors.secondary,
-                  gridColumn: 'span 3' 
-                }}
-              >
-                Calculator
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="vs-indicator" style={{ color: theme.colors.text }}>VS</div>
-
-        <div className="player-card" style={{ backgroundColor: theme.colors.cardBackground }}>
-          <div className="player-header">
-            <div className="player-name" style={{ color: theme.colors.text }}>
-              {duelSession.player2Name || 'Waiting for player...'}
-              {duelSession.player2IsGuest && <span style={{ fontStyle: 'italic' }}> (Guest)</span>}
-            </div>
-            <div className="player-score" style={{ color: theme.colors.primary }}>
-              Score: {player2Score}
-            </div>
-          </div>
-          
-          <div className="life-points-display">
-            <div className="life-points-value" style={{ color: theme.colors.text }}>
-              {player2LifePoints} LP
-            </div>
-            <div className="life-points-bar-container">
-              <div 
-                className="life-points-bar"
-                style={{ 
-                  width: `${Math.min(player2LifePoints / INITIAL_LIFE_POINTS * 100, 100)}%`,
-                  backgroundColor: getLifePointsColor(player2LifePoints)
-                }}
-              ></div>
-              {player2LifePoints > INITIAL_LIFE_POINTS && (
-                <div 
-                  className="life-points-bar extra"
-                  style={{ 
-                    width: `${Math.min((player2LifePoints - INITIAL_LIFE_POINTS) / INITIAL_LIFE_POINTS * 100, 100)}%`,
-                    backgroundColor: getLifePointsColor(player2LifePoints)
-                  }}
-                ></div>
-              )}
-            </div>
-          </div>
-          
-          {gameStarted && !matchOver && !matchPaused && duelSession.player2Id && (
-            <div className="life-point-controls">
-              <button 
-                onClick={() => updateLifePoints(2, -100)}
-                style={{ backgroundColor: theme.colors.error }}
-              >
-                -100
-              </button>
-              <button 
-                onClick={() => updateLifePoints(2, -500)}
-                style={{ backgroundColor: theme.colors.error }}
-              >
-                -500
-              </button>
-              <button 
-                onClick={() => updateLifePoints(2, -1000)}
-                style={{ backgroundColor: theme.colors.error }}
-              >
-                -1000
-              </button>
-              <button 
-                onClick={() => updateLifePoints(2, 100)}
-                style={{ backgroundColor: theme.colors.success }}
-              >
-                +100
-              </button>
-              <button 
-                onClick={() => updateLifePoints(2, 500)}
-                style={{ backgroundColor: theme.colors.success }}
-              >
-                +500
-              </button>
-              <button 
-                onClick={() => updateLifePoints(2, 1000)}
-                style={{ backgroundColor: theme.colors.success }}
-              >
-                +1000
-              </button>
-              <button
-                onClick={() => openCalculator(2)}
-                style={{ 
-                  backgroundColor: theme.colors.secondary,
-                  gridColumn: 'span 3' 
-                }}
-              >
-                Calculator
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {showMatchSummary && matchOver && (
-        <div className="match-summary" style={{ backgroundColor: theme.colors.surface }}>
-          <h3 style={{ color: theme.colors.text }}>Match Complete!</h3>
-          <div className="match-result" style={{ color: theme.colors.primary }}>
-            {matchWinner} wins the match ({player1Score} - {player2Score})
-          </div>
-          <div className="match-actions">
-            <button 
-              onClick={rematch}
-              style={{
-                backgroundColor: theme.colors.secondary,
-                color: theme.colors.text
-              }}
-            >
-              Rematch
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="game-controls">
-        {!gameStarted && duelSession.player2Id && (
+      <PageBackground backgroundImage={pageBackgrounds.duel}>
+        <div className="duel-container">
+          <div className="error-message">You are not part of this duel</div>
           <button 
-            onClick={startGame}
-            style={{
-              backgroundColor: theme.colors.success,
-              color: theme.colors.text
-            }}
-          >
-            Start Match
-          </button>
-        )}
-        
-        {gameStarted && !matchOver && (
-          <button 
-            onClick={togglePauseMatch}
-            style={{
-              backgroundColor: matchPaused ? theme.colors.success : theme.colors.warning,
-              color: theme.colors.text
-            }}
-          >
-            {matchPaused ? 'Resume Match' : 'Pause Match'}
-          </button>
-        )}
-        
-        {matchOver && !showMatchSummary && (
-          <button 
-            onClick={() => setShowMatchSummary(true)}
+            className="back-button"
+            onClick={() => navigate('/duel')}
             style={{
               backgroundColor: theme.colors.primary,
               color: theme.colors.text
             }}
           >
-            View Results
+            Back to Duel Lobby
           </button>
-        )}
-        
-        <button 
-          onClick={() => setShowQRCode(!showQRCode)}
-          style={{
-            backgroundColor: theme.colors.secondary,
-            color: theme.colors.text
-          }}
-        >
-          {showQRCode ? 'Hide QR Code' : 'Show QR Code'}
-        </button>
-        
-        <button 
-          onClick={() => navigate('/duel')}
-          style={{
-            backgroundColor: theme.colors.primary,
-            color: theme.colors.text
-          }}
-        >
-          Back to Lobby
-        </button>
-      </div>
+        </div>
+      </PageBackground>
+    );
+  }
 
-      {showQRCode && (
-        <div className="qr-code-container">
-          <h3 style={{ color: theme.colors.text }}>Scan to Join the Duel</h3>
-          <QRCodeSVG value={getInviteUrl()} size={200} />
-          <div className="invite-url" style={{ color: theme.colors.text }}>
-            {getInviteUrl()}
+  return (
+    <PageBackground backgroundImage={pageBackgrounds.duel}>
+      <div className="duel-container">
+        {/* Duel Winner Notification */}
+        {showDuelWinner && (
+          <div className="duel-winner-notification" style={{ backgroundColor: theme.colors.success }}>
+            <div className="duel-winner-text">
+              {duelWinnerName} won duel #{currentDuel - (currentDuel > 1 ? 1 : 0)}!
+            </div>
+          </div>
+        )}
+
+        <div className="duel-header">
+          <div className="duel-info">
+            <h2 style={{ color: theme.colors.text }}>Duel Session</h2>
+            <div className="match-info" style={{ color: theme.colors.textSecondary }}>
+              <span>Match: {player1Score} - {player2Score}</span>
+              <span>Current Duel: {currentDuel}</span>
+              {matchPaused && <span className="paused-indicator">PAUSED</span>}
+            </div>
+          </div>
+          <div className="game-timer" style={{ color: theme.colors.primary }}>
+            Time: {formatTime(timeRemaining)}
           </div>
         </div>
-      )}
 
-      {/* Calculator Modal */}
-      {showCalculator && (
-        <div className="calculator-modal">
-          <div className="calculator" style={{ backgroundColor: theme.colors.surface }}>
-            <div className="calculator-header">
-              <h3 style={{ color: theme.colors.text }}>
-                Life Points Calculator - Player {targetPlayer}
-              </h3>
+        <div className="players-area">
+          <div className="player-card" style={{ backgroundColor: theme.colors.cardBackground }}>
+            <div className="player-header">
+              <div className="player-name" style={{ color: theme.colors.text }}>
+                {duelSession.player1Name}
+                {duelSession.isGuestHost && <span style={{ fontStyle: 'italic' }}> (Guest)</span>}
+              </div>
+              <div className="player-score" style={{ color: theme.colors.primary }}>
+                Score: {player1Score}
+              </div>
+            </div>
+            
+            <div className="life-points-display">
+              <div className="life-points-value" style={{ color: theme.colors.text }}>
+                {player1LifePoints} LP
+              </div>
+              <div className="life-points-bar-container">
+                <div 
+                  className="life-points-bar"
+                  style={{ 
+                    width: `${Math.min(player1LifePoints / INITIAL_LIFE_POINTS * 100, 100)}%`,
+                    backgroundColor: getLifePointsColor(player1LifePoints)
+                  }}
+                ></div>
+                {player1LifePoints > INITIAL_LIFE_POINTS && (
+                  <div 
+                    className="life-points-bar extra"
+                    style={{ 
+                      width: `${Math.min((player1LifePoints - INITIAL_LIFE_POINTS) / INITIAL_LIFE_POINTS * 100, 100)}%`,
+                      backgroundColor: getLifePointsColor(player1LifePoints)
+                    }}
+                  ></div>
+                )}
+              </div>
+            </div>
+            
+            {gameStarted && !matchOver && !matchPaused && (
+              <div className="life-point-controls">
+                <button 
+                  onClick={() => updateLifePoints(1, -100)}
+                  style={{ backgroundColor: theme.colors.error }}
+                >
+                  -100
+                </button>
+                <button 
+                  onClick={() => updateLifePoints(1, -500)}
+                  style={{ backgroundColor: theme.colors.error }}
+                >
+                  -500
+                </button>
+                <button 
+                  onClick={() => updateLifePoints(1, -1000)}
+                  style={{ backgroundColor: theme.colors.error }}
+                >
+                  -1000
+                </button>
+                <button 
+                  onClick={() => updateLifePoints(1, 100)}
+                  style={{ backgroundColor: theme.colors.success }}
+                >
+                  +100
+                </button>
+                <button 
+                  onClick={() => updateLifePoints(1, 500)}
+                  style={{ backgroundColor: theme.colors.success }}
+                >
+                  +500
+                </button>
+                <button 
+                  onClick={() => updateLifePoints(1, 1000)}
+                  style={{ backgroundColor: theme.colors.success }}
+                >
+                  +1000
+                </button>
+                <button
+                  onClick={() => openCalculator(1)}
+                  style={{ 
+                    backgroundColor: theme.colors.secondary,
+                    gridColumn: 'span 3' 
+                  }}
+                >
+                  Calculator
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="vs-indicator" style={{ color: theme.colors.text }}>VS</div>
+
+          <div className="player-card" style={{ backgroundColor: theme.colors.cardBackground }}>
+            <div className="player-header">
+              <div className="player-name" style={{ color: theme.colors.text }}>
+                {duelSession.player2Name || 'Waiting for player...'}
+                {duelSession.player2IsGuest && <span style={{ fontStyle: 'italic' }}> (Guest)</span>}
+              </div>
+              <div className="player-score" style={{ color: theme.colors.primary }}>
+                Score: {player2Score}
+              </div>
+            </div>
+            
+            <div className="life-points-display">
+              <div className="life-points-value" style={{ color: theme.colors.text }}>
+                {player2LifePoints} LP
+              </div>
+              <div className="life-points-bar-container">
+                <div 
+                  className="life-points-bar"
+                  style={{ 
+                    width: `${Math.min(player2LifePoints / INITIAL_LIFE_POINTS * 100, 100)}%`,
+                    backgroundColor: getLifePointsColor(player2LifePoints)
+                  }}
+                ></div>
+                {player2LifePoints > INITIAL_LIFE_POINTS && (
+                  <div 
+                    className="life-points-bar extra"
+                    style={{ 
+                      width: `${Math.min((player2LifePoints - INITIAL_LIFE_POINTS) / INITIAL_LIFE_POINTS * 100, 100)}%`,
+                      backgroundColor: getLifePointsColor(player2LifePoints)
+                    }}
+                  ></div>
+                )}
+              </div>
+            </div>
+            
+            {gameStarted && !matchOver && !matchPaused && duelSession.player2Id && (
+              <div className="life-point-controls">
+                <button 
+                  onClick={() => updateLifePoints(2, -100)}
+                  style={{ backgroundColor: theme.colors.error }}
+                >
+                  -100
+                </button>
+                <button 
+                  onClick={() => updateLifePoints(2, -500)}
+                  style={{ backgroundColor: theme.colors.error }}
+                >
+                  -500
+                </button>
+                <button 
+                  onClick={() => updateLifePoints(2, -1000)}
+                  style={{ backgroundColor: theme.colors.error }}
+                >
+                  -1000
+                </button>
+                <button 
+                  onClick={() => updateLifePoints(2, 100)}
+                  style={{ backgroundColor: theme.colors.success }}
+                >
+                  +100
+                </button>
+                <button 
+                  onClick={() => updateLifePoints(2, 500)}
+                  style={{ backgroundColor: theme.colors.success }}
+                >
+                  +500
+                </button>
+                <button 
+                  onClick={() => updateLifePoints(2, 1000)}
+                  style={{ backgroundColor: theme.colors.success }}
+                >
+                  +1000
+                </button>
+                <button
+                  onClick={() => openCalculator(2)}
+                  style={{ 
+                    backgroundColor: theme.colors.secondary,
+                    gridColumn: 'span 3' 
+                  }}
+                >
+                  Calculator
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {showMatchSummary && matchOver && (
+          <div className="match-summary" style={{ backgroundColor: theme.colors.surface }}>
+            <h3 style={{ color: theme.colors.text }}>Match Complete!</h3>
+            <div className="match-result" style={{ color: theme.colors.primary }}>
+              {matchWinner} wins the match ({player1Score} - {player2Score})
+            </div>
+            <div className="match-actions">
               <button 
-                className="close-button"
-                onClick={() => setShowCalculator(false)}
-                style={{ color: theme.colors.error }}
+                onClick={rematch}
+                style={{
+                  backgroundColor: theme.colors.secondary,
+                  color: theme.colors.text
+                }}
               >
-                ×
+                Rematch
               </button>
             </div>
-            <div 
-              className="calculator-display"
-              style={{ 
-                backgroundColor: theme.colors.background,
-                color: theme.colors.text 
+          </div>
+        )}
+
+        <div className="game-controls">
+          {!gameStarted && (
+            <button 
+              onClick={startGame}
+              style={{
+                backgroundColor: theme.colors.success,
+                color: theme.colors.text
               }}
             >
-              {calculatorValue || '0'}
-            </div>
-            <div className="calculator-buttons">
-              <button onClick={() => handleCalculatorInput('7')}>7</button>
-              <button onClick={() => handleCalculatorInput('8')}>8</button>
-              <button onClick={() => handleCalculatorInput('9')}>9</button>
-              <button onClick={() => handleCalculatorInput('×2')}>×2</button>
-              <button onClick={() => handleCalculatorInput('4')}>4</button>
-              <button onClick={() => handleCalculatorInput('5')}>5</button>
-              <button onClick={() => handleCalculatorInput('6')}>6</button>
-              <button onClick={() => handleCalculatorInput('÷2')}>÷2</button>
-              <button onClick={() => handleCalculatorInput('1')}>1</button>
-              <button onClick={() => handleCalculatorInput('2')}>2</button>
-              <button onClick={() => handleCalculatorInput('3')}>3</button>
-              <button onClick={() => handleCalculatorInput('←')}>←</button>
-              <button onClick={() => handleCalculatorInput('0')}>0</button>
-              <button onClick={() => handleCalculatorInput('00')}>00</button>
-              <button onClick={() => handleCalculatorInput('000')}>000</button>
-              <button onClick={() => handleCalculatorInput('C')}>C</button>
-              <button 
-                onClick={() => handleCalculatorInput('Apply+')}
-                style={{ 
-                  backgroundColor: theme.colors.success,
-                  gridColumn: 'span 2' 
-                }}
-              >
-                Apply +
-              </button>
-              <button 
-                onClick={() => handleCalculatorInput('Apply-')}
-                style={{ 
-                  backgroundColor: theme.colors.error,
-                  gridColumn: 'span 2' 
-                }}
-              >
-                Apply -
-              </button>
+              Start Match
+            </button>
+          )}
+          
+          {gameStarted && !matchOver && (
+            <button 
+              onClick={togglePauseMatch}
+              style={{
+                backgroundColor: matchPaused ? theme.colors.success : theme.colors.warning,
+                color: theme.colors.text
+              }}
+            >
+              {matchPaused ? 'Resume Match' : 'Pause Match'}
+            </button>
+          )}
+          
+          {matchOver && !showMatchSummary && (
+            <button 
+              onClick={() => setShowMatchSummary(true)}
+              style={{
+                backgroundColor: theme.colors.primary,
+                color: theme.colors.text
+              }}
+            >
+              View Results
+            </button>
+          )}
+          
+          <button 
+            onClick={() => setShowQRCode(!showQRCode)}
+            style={{
+              backgroundColor: theme.colors.secondary,
+              color: theme.colors.text
+            }}
+          >
+            {showQRCode ? 'Hide QR Code' : 'Show QR Code'}
+          </button>
+          
+          <button 
+            onClick={() => navigate('/duel')}
+            style={{
+              backgroundColor: theme.colors.primary,
+              color: theme.colors.text
+            }}
+          >
+            Back to Lobby
+          </button>
+        </div>
+
+        {showQRCode && (
+          <div className="qr-code-container">
+            <h3 style={{ color: theme.colors.text }}>Scan to Join the Duel</h3>
+            <QRCodeSVG value={getInviteUrl()} size={200} />
+            <div className="invite-url" style={{ color: theme.colors.text }}>
+              {getInviteUrl()}
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        {/* Calculator Modal */}
+        {showCalculator && (
+          <div className="calculator-modal">
+            <div className="calculator" style={{ backgroundColor: theme.colors.surface }}>
+              <div className="calculator-header">
+                <h3 style={{ color: theme.colors.text }}>
+                  Life Points Calculator - Player {targetPlayer}
+                </h3>
+                <button 
+                  className="close-button"
+                  onClick={() => setShowCalculator(false)}
+                  style={{ color: theme.colors.error }}
+                >
+                  ×
+                </button>
+              </div>
+              <div 
+                className="calculator-display"
+                style={{ 
+                  backgroundColor: theme.colors.background,
+                  color: theme.colors.text 
+                }}
+              >
+                {calculatorValue || '0'}
+              </div>
+              <div className="calculator-buttons">
+                <button onClick={() => handleCalculatorInput('7')}>7</button>
+                <button onClick={() => handleCalculatorInput('8')}>8</button>
+                <button onClick={() => handleCalculatorInput('9')}>9</button>
+                <button onClick={() => handleCalculatorInput('×2')}>×2</button>
+                <button onClick={() => handleCalculatorInput('4')}>4</button>
+                <button onClick={() => handleCalculatorInput('5')}>5</button>
+                <button onClick={() => handleCalculatorInput('6')}>6</button>
+                <button onClick={() => handleCalculatorInput('÷2')}>÷2</button>
+                <button onClick={() => handleCalculatorInput('1')}>1</button>
+                <button onClick={() => handleCalculatorInput('2')}>2</button>
+                <button onClick={() => handleCalculatorInput('3')}>3</button>
+                <button onClick={() => handleCalculatorInput('←')}>←</button>
+                <button onClick={() => handleCalculatorInput('0')}>0</button>
+                <button onClick={() => handleCalculatorInput('00')}>00</button>
+                <button onClick={() => handleCalculatorInput('000')}>000</button>
+                <button onClick={() => handleCalculatorInput('C')}>C</button>
+                <button 
+                  onClick={() => handleCalculatorInput('Apply+')}
+                  style={{ 
+                    backgroundColor: theme.colors.success,
+                    gridColumn: 'span 2' 
+                  }}
+                >
+                  Apply +
+                </button>
+                <button 
+                  onClick={() => handleCalculatorInput('Apply-')}
+                  style={{ 
+                    backgroundColor: theme.colors.error,
+                    gridColumn: 'span 2' 
+                  }}
+                >
+                  Apply -
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </PageBackground>
   );
 };
 

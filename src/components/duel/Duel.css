@@ -362,4 +362,347 @@
   .duel-winner-text {
     font-size: 1.4rem;
   }
+}
+
+.duel-content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 2rem;
+  border-radius: 8px;
+  border: 2px solid var(--border-color);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.page-header h1 {
+  font-size: 3rem;
+  color: var(--bright-gold);
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 0 var(--shadow-color);
+  font-family: 'Press Start 2P', cursive;
+}
+
+.page-description {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  text-shadow: 1px 1px 0 var(--shadow-color);
+}
+
+.duel-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  padding: 1rem;
+}
+
+.duel-option {
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid var(--bright-gold);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.duel-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent, rgba(252, 221, 90, 0.1), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.duel-option:hover {
+  transform: translateY(-5px);
+  border-color: var(--main-blue);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.duel-option:hover::before {
+  transform: translateX(100%);
+}
+
+.duel-option h2 {
+  color: var(--bright-gold);
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+  text-shadow: 2px 2px 0 var(--shadow-color);
+  font-family: 'Press Start 2P', cursive;
+}
+
+.duel-option p {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.pixel-button {
+  background: var(--main-blue);
+  color: var(--bright-gold);
+  border: 2px solid var(--bright-gold);
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  font-family: 'Press Start 2P', cursive;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pixel-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent, rgba(252, 221, 90, 0.2), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.pixel-button:hover {
+  background: var(--bright-gold);
+  color: var(--main-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.pixel-button:hover::before {
+  transform: translateX(100%);
+}
+
+.pixel-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 768px) {
+  .duel-content {
+    padding: 1rem;
+  }
+
+  .page-header {
+    padding: 1.5rem;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .duel-options {
+    grid-template-columns: 1fr;
+  }
+
+  .duel-option {
+    padding: 1.5rem;
+  }
+
+  .duel-option h2 {
+    font-size: 1.5rem;
+  }
+
+  .pixel-button {
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+  }
+}
+
+.pixel-input,
+.pixel-select {
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--text-primary);
+  border: 2px solid var(--bright-gold);
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  border-radius: 4px;
+  width: 100%;
+  max-width: 300px;
+  font-family: 'Press Start 2P', cursive;
+  transition: all 0.3s ease;
+}
+
+.pixel-input:focus,
+.pixel-select:focus {
+  outline: none;
+  border-color: var(--main-blue);
+  box-shadow: 0 0 0 2px rgba(252, 221, 90, 0.2);
+}
+
+.duel-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  margin: 1rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bright-gold) rgba(0, 0, 0, 0.3);
+}
+
+.duel-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.duel-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.duel-list::-webkit-scrollbar-thumb {
+  background: var(--bright-gold);
+  border-radius: 4px;
+}
+
+.duel-list::-webkit-scrollbar-thumb:hover {
+  background: var(--main-blue);
+}
+
+@media (max-width: 768px) {
+  .duel-content {
+    padding: 1rem;
+  }
+
+  .duel-list {
+    max-height: 300px;
+  }
+}
+
+.duel-item {
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid var(--bright-gold);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.duel-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.duel-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.duel-info span {
+  color: var(--text-primary);
+}
+
+.guest-tag {
+  color: var(--bright-gold) !important;
+  font-style: italic;
+}
+
+.mobile-access {
+  margin-top: 2rem;
+}
+
+.access-url {
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid var(--bright-gold);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-top: 1rem;
+  color: var(--bright-gold);
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.8rem;
+  word-break: break-all;
+  text-align: center;
+}
+
+.error-message {
+  background: rgba(255, 0, 0, 0.2);
+  border: 2px solid #ff0000;
+  color: #ff0000;
+  padding: 1rem;
+  border-radius: 4px;
+  margin: 1rem 0;
+  text-align: center;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.9rem;
+}
+
+.loading-message {
+  color: var(--bright-gold);
+  font-family: 'Press Start 2P', cursive;
+  font-size: 1.2rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+@media (max-width: 768px) {
+  .duel-item {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .pixel-input,
+  .pixel-select {
+    max-width: 100%;
+  }
+
+  .access-url {
+    font-size: 0.7rem;
+  }
+}
+
+.join-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.room-code-input {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.room-code-input .pixel-input {
+  flex: 1;
+}
+
+.qr-scanner {
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid var(--bright-gold);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.qr-scanner p {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
 } 

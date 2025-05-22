@@ -2,8 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { logoutUser } from '../../services/firebase/firebase';
-
-const deckdojoBg = require('../../assets/images/deckdojo-bg.png'); // We'll add this image
+import PageBackground from '../common/PageBackground';
+import { pageBackgrounds } from '../../assets/images/page-backgrounds';
 
 const DeckDojo = () => {
   const { currentUser } = useAuth();
@@ -17,55 +17,46 @@ const DeckDojo = () => {
   };
 
   return (
-    <div 
-      className="deckdojo-landing"
-      style={{
-        background: `url(${deckdojoBg}) center center/cover no-repeat fixed`,
-        minHeight: '100vh',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-      }}
-    >
-      <header className="deckdojo-header">
-        <h1>Welcome to DeckDojo</h1>
-        <div className="user-info">
-          <span>Welcome, {currentUser?.email}</span>
-          <button onClick={handleLogout}>Logout</button>
-        </div>
-      </header>
-
+    <PageBackground backgroundImage={pageBackgrounds.home}>
+      {/* Main content container */}
       <div className="deckdojo-content">
-        <div className="feature-cards">
-          <div className="feature-card">
-            <h3>Life Point Tracker</h3>
-            <p>Track life points during your duels</p>
-            <Link to="/life-points">Open Tracker</Link>
-          </div>
-          
-          <div className="feature-card">
-            <h3>Arsenal</h3>
-            <p>Manage your YuGiOh decks in your arsenal</p>
-            <Link to="/decks">Go to Arsenal</Link>
-          </div>
-          
-          <div className="feature-card">
-            <h3>Game History</h3>
-            <p>View your past duels and statistics</p>
-            <Link to="/history">View History</Link>
-          </div>
-          
-          <div className="feature-card">
-            <h3>Card Scanner</h3>
-            <p>Scan cards to check prices (Coming Soon)</p>
-            <Link to="/scanner" className="disabled">Scanner</Link>
-          </div>
-        </div>
+        {/* Header */}
+        <header className="deckdojo-header">
+          <h1>Welcome to DeckDojo</h1>
+        </header>
+
+        {/* Game-style menu */}
+        <nav className="deckdojo-menu">
+          <Link to="/duel" className="menu-item duel">
+            <span className="menu-icon">⚔️</span>
+            <span className="menu-text">Duel</span>
+            <span className="menu-desc">Enter the arena</span>
+          </Link>
+
+          <Link to="/explore" className="menu-item explore">
+            <span className="menu-icon">🔍</span>
+            <span className="menu-text">Explore</span>
+            <span className="menu-desc">Discover new cards</span>
+          </Link>
+
+          {currentUser && (
+            <>
+              <Link to="/decks" className="menu-item arsenal">
+                <span className="menu-icon">🗡️</span>
+                <span className="menu-text">Arsenal</span>
+                <span className="menu-desc">Manage your decks</span>
+              </Link>
+
+              <Link to="/community" className="menu-item community">
+                <span className="menu-icon">👥</span>
+                <span className="menu-text">Community</span>
+                <span className="menu-desc">Join the dojo</span>
+              </Link>
+            </>
+          )}
+        </nav>
       </div>
-    </div>
+    </PageBackground>
   );
 };
 
